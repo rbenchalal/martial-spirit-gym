@@ -13,6 +13,34 @@ export default function Gallery() {
           description="Quelques aperçus des séances et de la dynamique du club."
         />
 
+        <div className="mt-10 grid gap-5 lg:grid-cols-[1.35fr_1fr]">
+          <div className="overflow-hidden rounded-2xl border border-white/10 bg-zinc-900">
+            <div className="relative aspect-video">
+              <video
+                className="h-full w-full object-cover"
+                controls
+                playsInline
+                preload="metadata"
+              >
+                <source src={siteData.featuredVideo.src} type="video/mp4" />
+                Votre navigateur ne supporte pas la lecture vidéo.
+              </video>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-white/10 bg-zinc-900 p-6">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-red-300">
+              Vidéo en vedette
+            </p>
+            <h3 className="mt-3 text-2xl font-semibold text-white">
+              {siteData.featuredVideo.title}
+            </h3>
+            <p className="mt-4 leading-7 text-zinc-300">
+              {siteData.featuredVideo.description}
+            </p>
+          </div>
+        </div>
+
         <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {siteData.gallery.map((item) => (
             <article

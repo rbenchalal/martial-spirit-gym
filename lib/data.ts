@@ -132,6 +132,12 @@ export const siteData = {
       },
     ],
   },
+  featuredVideo: {
+    src: "/videos/training-camp-kids.mp4",
+    title: "Training Camp Kids",
+    description:
+      "Un aperçu de l’énergie, de l’encadrement et de l’ambiance des séances kids.",
+  },
   gallery: [
     { src: "/images/gallery-kids-group.jpeg", alt: "Cours enfants en groupe" },
     { src: "/images/gallery-kids-group-2.jpeg", alt: "Entraînement kids" },
