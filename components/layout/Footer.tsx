@@ -1,12 +1,22 @@
 import Container from "@/components/ui/Container";
 import { siteData } from "@/lib/data";
+import Image from "next/image";
 
 export default function Footer() {
   return (
     <footer className="border-t border-white/10 bg-black">
       <Container className="flex flex-col gap-6 py-10 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-lg font-semibold text-white">{siteData.name}</p>
+          <div className="flex items-center gap-3">
+            <Image
+              src={siteData.logo}
+              alt={`Logo ${siteData.name}`}
+              width={44}
+              height={44}
+              className="h-11 w-11 rounded-xl border border-white/10 object-cover"
+            />
+            <p className="text-lg font-semibold text-white">{siteData.name}</p>
+          </div>
           <p className="mt-2 text-sm text-zinc-400">
             {siteData.positioning}
           </p>

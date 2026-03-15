@@ -1,6 +1,7 @@
 import Container from "@/components/ui/Container";
 import SectionTitle from "@/components/ui/SectionTitle";
 import { siteData } from "@/lib/data";
+import Image from "next/image";
 
 export default function Gallery() {
   return (
@@ -14,12 +15,23 @@ export default function Gallery() {
 
         <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {siteData.gallery.map((item) => (
-            <div
-              key={item}
-              className="aspect-[4/3] rounded-2xl border border-white/10 bg-gradient-to-br from-zinc-900 to-zinc-800 p-5"
+            <article
+              key={item.src}
+              className="group overflow-hidden rounded-2xl border border-white/10 bg-zinc-900"
             >
-              <p className="text-sm text-zinc-200">{item}</p>
-            </div>
+              <div className="relative aspect-[4/3]">
+                <Image
+                  src={item.src}
+                  alt={item.alt}
+                  fill
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                  className="object-cover transition duration-500 group-hover:scale-105 group-hover:brightness-110"
+                />
+              </div>
+              <p className="border-t border-white/10 px-4 py-3 text-sm text-zinc-200">
+                {item.alt}
+              </p>
+            </article>
           ))}
         </div>
       </Container>

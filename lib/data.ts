@@ -6,6 +6,7 @@ export const siteData = {
   phone: "078 905 08 83",
   email: "martialspiritcoaching@gmail.com",
   instagram: "https://www.instagram.com/martialspiritcoaching/",
+  logo: "/images/logo-martial-spirit-gym.jpeg",
   disciplines: "Boxe Thaïlandaise & MMA",
   audience: ["Enfants dès 8 ans", "Adultes", "Débutants", "Confirmés"],
   hero: {
@@ -132,12 +133,18 @@ export const siteData = {
     ],
   },
   gallery: [
-    "Séance technique de boxe thaïlandaise",
-    "Entraînement MMA collectif",
-    "Cours kids encadré",
-    "Travail de pads et cardio",
-    "Préparation physique",
-    "Coaching privé",
+    { src: "/images/gallery-kids-group.jpeg", alt: "Cours enfants en groupe" },
+    { src: "/images/gallery-kids-group-2.jpeg", alt: "Entraînement kids" },
+    { src: "/images/gallery-kids-gloves.jpeg", alt: "Enfants avec gants de boxe" },
+    { src: "/images/gallery-kids-training-1.jpeg", alt: "Exercice technique kids" },
+    { src: "/images/gallery-kids-training-2.jpeg", alt: "Atelier boxe enfants" },
+    { src: "/images/gallery-kids-training-3.jpeg", alt: "Drill de boxe kids" },
+    { src: "/images/gallery-kids-training-4.jpeg", alt: "Séance de frappe kids" },
+    { src: "/images/gallery-kids-training-5.jpeg", alt: "Progression technique kids" },
+    { src: "/images/gallery-private-1.jpeg", alt: "Coaching privé kids" },
+    { src: "/images/gallery-adults-group-1.jpeg", alt: "Cours adultes en groupe" },
+    { src: "/images/gallery-adults-group-2.jpeg", alt: "Entraînement adultes" },
+    { src: "/images/gallery-empty-gym.jpeg", alt: "Salle Martial Spirit Gym" },
   ],
   faq: [
     {

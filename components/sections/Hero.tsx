@@ -2,11 +2,29 @@ import Container from "@/components/ui/Container";
 import InfoBadge from "@/components/ui/InfoBadge";
 import PrimaryButton from "@/components/ui/PrimaryButton";
 import { siteData } from "@/lib/data";
+import Image from "next/image";
 
 export default function Hero() {
   return (
     <section id="hero" className="border-b border-white/10 py-20 sm:py-24">
       <Container>
+        <div className="mb-6 inline-flex items-center gap-4 rounded-2xl border border-white/10 bg-zinc-900/70 p-3 pr-5">
+          <Image
+            src={siteData.logo}
+            alt={`Logo ${siteData.name}`}
+            width={72}
+            height={72}
+            className="h-14 w-14 rounded-xl border border-white/10 object-cover sm:h-[72px] sm:w-[72px]"
+            priority
+          />
+          <div>
+            <p className="text-base font-semibold text-white sm:text-lg">{siteData.name}</p>
+            <p className="text-xs uppercase tracking-[0.16em] text-zinc-400 sm:text-sm">
+              {siteData.city}
+            </p>
+          </div>
+        </div>
+
         <span className="inline-block rounded-full border border-red-500/40 bg-red-500/10 px-4 py-2 text-sm font-medium text-red-300">
           {siteData.hero.badge}
         </span>
