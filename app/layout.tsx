@@ -16,6 +16,13 @@ export const metadata: Metadata = {
   title: "Martial Spirit Gym | Boxe Thaïlandaise & MMA à Gland pour Kids et Adultes",
   description:
     "Martial Spirit Gym à Gland, école d'arts martiaux en boxe thaïlandaise (Muay Thaï) et MMA pour enfants dès 8 ans, adultes, débutants et confirmés.",
+  icons: {
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/images/logo-martial-spirit-gym.jpeg", type: "image/jpeg" },
+    ],
+    apple: [{ url: "/images/logo-martial-spirit-gym.jpeg", type: "image/jpeg" }],
+  },
   openGraph: {
     title: "Martial Spirit Gym | Boxe Thaïlandaise & MMA à Gland pour Kids et Adultes",
     description:
