@@ -17,18 +17,45 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-black text-white">
       <Navbar />
-      <main>
+      <main className="relative overflow-hidden">
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-white/5 to-transparent" />
         <Hero />
-        <About />
-        <Disciplines />
-        <Conditioning />
-        <Audience />
-        <Benefits />
-        <Schedule />
-        <Pricing />
-        <Gallery />
-        <FAQ />
-        <Contact />
+
+        <div className="relative border-t border-white/10 bg-zinc-950/60">
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-red-500/45 to-transparent" />
+          <About />
+        </div>
+        <div className="relative border-t border-white/10">
+          <Disciplines />
+        </div>
+        <div className="relative border-t border-white/10 bg-zinc-950/50">
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-red-500/35 to-transparent" />
+          <Conditioning />
+        </div>
+        <div className="relative border-t border-white/10">
+          <Audience />
+        </div>
+        <div className="relative border-t border-white/10 bg-zinc-950/60">
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-red-500/35 to-transparent" />
+          <Benefits />
+        </div>
+        <div className="relative border-t border-white/10">
+          <Schedule />
+        </div>
+        <div className="relative border-t border-white/10 bg-zinc-950/50">
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-red-500/35 to-transparent" />
+          <Pricing />
+        </div>
+        <div className="relative border-t border-white/10">
+          <Gallery />
+        </div>
+        <div className="relative border-t border-white/10 bg-zinc-950/60">
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-red-500/35 to-transparent" />
+          <FAQ />
+        </div>
+        <div className="relative border-y border-white/10">
+          <Contact />
+        </div>
       </main>
       <Footer />
       <WhatsAppButton />

@@ -25,49 +25,87 @@ function SocialIcon({ platform }: { platform: string }) {
 
 export default function Footer() {
   return (
-    <footer className="border-t border-white/10 bg-black">
-      <Container className="flex flex-col gap-6 py-10 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <div className="flex items-center gap-3">
-            <Image
-              src={siteData.logo}
-              alt={`Logo ${siteData.name}`}
-              width={44}
-              height={44}
-              className="h-11 w-11 rounded-xl border border-white/10 object-cover"
-            />
-            <p className="text-lg font-semibold text-white">{siteData.name}</p>
+    <footer className="relative overflow-hidden border-t border-white/10 bg-black">
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-red-500/60 to-transparent" />
+      <div className="pointer-events-none absolute -left-16 top-10 hidden h-40 w-40 rounded-full bg-red-700/20 blur-3xl sm:block" />
+
+      <Container className="relative py-14 sm:py-16">
+        <div className="mb-10 flex flex-col gap-4 rounded-2xl border border-white/10 bg-zinc-950/70 p-5 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-red-200">Démarrage / Informations</p>
+            <p className="mt-1 text-sm text-zinc-300">
+              Un cours d'essai permet de découvrir l'ambiance du club, la méthodologie et le niveau adapté à vos
+              objectifs.
+            </p>
           </div>
-          <p className="mt-2 text-sm text-zinc-400">
-            {siteData.positioning}
-          </p>
-          <p className="mt-1 text-sm text-zinc-500">{siteData.address}</p>
-          <div className="mt-3 flex flex-wrap gap-2">
-            {siteData.socialLinks.map((social) => (
-              <a
-                key={social.href}
-                href={social.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label={social.ariaLabel}
-                className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-zinc-900/80 px-3 py-1.5 text-xs font-medium text-zinc-300 transition hover:border-white/30 hover:text-white"
-              >
-                <SocialIcon platform={social.platform} />
-                {social.label}
-              </a>
-            ))}
-          </div>
-          <p className="mt-1 text-sm text-zinc-500">
-            {siteData.phone} - {siteData.email}
-          </p>
+          <a
+            href="#contact"
+            className="inline-flex items-center justify-center rounded-full bg-red-600 px-5 py-2.5 text-sm font-semibold text-white transition duration-200 md:hover:-translate-y-0.5 hover:bg-red-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/60"
+          >
+            Contacter le club
+          </a>
         </div>
 
-        <div className="flex flex-wrap gap-4 text-sm text-zinc-400">
-          {siteData.nav.map((item) => (
-            <a key={item.href} href={item.href} className="transition hover:text-white">
-              {item.label}
-            </a>
-          ))}
+        <div className="grid gap-10 lg:grid-cols-[1.4fr_1fr_1fr]">
+          <div>
+            <div className="flex items-center gap-3">
+              <Image
+                src={siteData.logo}
+                alt={`Logo ${siteData.name}`}
+                width={48}
+                height={48}
+                className="h-12 w-12 rounded-xl border border-white/10 object-cover"
+              />
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-zinc-400">Martial Spirit</p>
+                <p className="text-lg font-semibold text-white">{siteData.name}</p>
+              </div>
+            </div>
+
+            <p className="mt-4 max-w-md text-sm leading-7 text-zinc-300">{siteData.positioning}</p>
+            <p className="mt-2 text-sm text-zinc-500">{siteData.address}</p>
+            <p className="mt-1 text-sm text-zinc-500">
+              {siteData.phone} - {siteData.email}
+            </p>
+          </div>
+
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-zinc-400">Navigation</p>
+            <nav className="mt-4 grid gap-2 text-sm">
+              {siteData.nav.map((item) => (
+                <a
+                  key={item.href}
+                  href={item.href}
+                  className="text-zinc-300 transition duration-200 md:hover:translate-x-0.5 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/60"
+                >
+                  {item.label}
+                </a>
+              ))}
+            </nav>
+          </div>
+
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-zinc-400">Réseaux sociaux</p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              {siteData.socialLinks.map((social) => (
+                <a
+                  key={social.href}
+                  href={social.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={social.ariaLabel}
+                  className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-zinc-900/80 px-3 py-1.5 text-xs font-medium text-zinc-300 transition duration-200 md:hover:-translate-y-0.5 hover:border-white/30 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/60"
+                >
+                  <SocialIcon platform={social.platform} />
+                  {social.label}
+                </a>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-10 border-t border-white/10 pt-4 text-xs uppercase tracking-[0.15em] text-zinc-500">
+          Martial Spirit Gym - Arts martiaux, conditioning et progression durable
         </div>
       </Container>
     </footer>
