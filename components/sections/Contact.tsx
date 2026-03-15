@@ -60,6 +60,16 @@ export default function Contact() {
               Retrouve-nous à {siteData.address}. Contacte-nous pour réserver un cours
               d'essai en boxe thaïlandaise ou MMA.
             </p>
+
+            <div className="mt-6 overflow-hidden rounded-xl border border-white/10 bg-black/20">
+              <iframe
+                title="Carte Martial Spirit Gym"
+                src="https://www.google.com/maps?q=Route+de+Nyon+21,+Gland,+Suisse&output=embed"
+                className="h-72 w-full sm:h-80"
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+              />
+            </div>
           </div>
         </div>
       </Container>
