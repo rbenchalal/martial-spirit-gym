@@ -10,6 +10,7 @@ import Gallery from "@/components/sections/Gallery";
 import Hero from "@/components/sections/Hero";
 import Pricing from "@/components/sections/Pricing";
 import Schedule from "@/components/sections/Schedule";
+import WhatsAppButton from "@/components/ui/WhatsAppButton";
 
 export default function Home() {
   return (
@@ -28,6 +29,7 @@ export default function Home() {
         <Contact />
       </main>
       <Footer />
+      <WhatsAppButton />
     </div>
   );
 }
