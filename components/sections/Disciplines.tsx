@@ -8,11 +8,11 @@ export default function Disciplines() {
       <Container>
         <SectionTitle
           eyebrow="Disciplines"
-          title="Une pratique complète, du débutant au confirmé"
-          description="Des formats de cours pensés pour progresser techniquement et physiquement."
+          title="Muay Thaï, MMA et accompagnement personnalisé"
+          description="Chaque discipline suit une progression technique claire, adaptée au niveau de pratique."
         />
 
-        <div className="mt-10 grid gap-6 md:grid-cols-3">
+        <div className="mt-10 grid gap-6 md:grid-cols-2">
           {siteData.disciplineCards.map((card) => (
             <article
               key={card.title}

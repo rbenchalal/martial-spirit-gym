@@ -1,70 +1,71 @@
 export const siteData = {
   name: "Martial Spirit Gym",
+  positioning: "École d'arts martiaux - Boxe Thaïlandaise & MMA",
   city: "Gland",
+  address: "Route de Nyon 21 - Gland, Suisse",
+  phone: "078 905 08 83",
+  email: "martialspiritcoaching@gmail.com",
+  instagram: "https://www.instagram.com/martialspiritcoaching/",
   disciplines: "Boxe Thaïlandaise & MMA",
-  audience: "Kids dès 8 ans",
+  audience: ["Enfants dès 8 ans", "Adultes", "Débutants", "Confirmés"],
   hero: {
     badge: "Martial Spirit Gym",
     title: "Boxe Thaïlandaise & MMA à Gland pour Kids et Adultes",
     description:
-      "École d'arts martiaux dédiée à la boxe thaïlandaise et au MMA. Cours pour enfants dès 8 ans, adultes, débutants et pratiquants confirmés.",
+      "Martial Spirit Gym est une école dédiée à la pratique de la boxe thaïlandaise (Muay Thaï) et du MMA. Les cours sont accessibles aux enfants et aux adultes, débutants comme pratiquants confirmés.",
     primaryCta: { label: "Voir le planning", href: "#planning" },
     secondaryCta: { label: "Voir les tarifs", href: "#tarifs" },
     highlights: [
-      { label: "Public", value: "Kids dès 8 ans" },
+      { label: "Positionnement", value: "École d'arts martiaux premium" },
       { label: "Disciplines", value: "Muay Thaï & MMA" },
       { label: "Cours", value: "Collectifs & privés" },
-      { label: "Lieu", value: "Gland, Suisse" },
+      { label: "Lieu", value: "Route de Nyon 21 - Gland" },
     ],
   },
   about: {
-    title: "Un club d'arts martiaux structuré et exigeant",
-    text: "Notre approche allie technique, discipline et progression durable. Chaque séance est construite pour développer la confiance, la condition physique et la maîtrise, dans une ambiance respectueuse et motivante.",
+    title: "Une école dédiée à la progression de chaque pratiquant",
+    text: "Martial Spirit Gym est une école dédiée à la pratique de la boxe thaïlandaise (Muay Thaï) et du MMA. Les cours sont accessibles aux enfants et aux adultes, débutants comme pratiquants confirmés.",
+    kidsTitle: "Cours enfants",
+    kidsText:
+      "Les cours enfants développent la coordination, la confiance en soi, la discipline et le respect dans un environnement pédagogique et sécurisé.",
     points: [
-      "Encadrement pédagogique pour tous niveaux",
-      "Approche technique orientée progression",
-      "Ambiance sérieuse, bienveillante et dynamique",
+      "Encadrement pédagogique adapté à tous les niveaux",
+      "Travail technique, physique et mental dans chaque séance",
+      "Cadre sérieux, bienveillant et sécurisé",
     ],
   },
   disciplineCards: [
     {
-      title: "Boxe Thaïlandaise",
+      title: "Boxe Thaïlandaise - Muay Thaï",
       description:
-        "Travail complet des frappes, déplacements, timing et conditionnement spécifique.",
+        "La boxe thaïlandaise est un art martial complet utilisant poings, pieds, coudes et genoux. Les entraînements développent la technique, la condition physique et le mental.",
     },
     {
       title: "MMA",
       description:
-        "Combinaison striking, lutte et contrôle pour une pratique moderne et polyvalente.",
+        "Le MMA combine plusieurs disciplines : striking, lutte et grappling. Les entraînements incluent travail debout, amenés au sol, positions de contrôle et soumissions.",
     },
     {
       title: "Cours privés",
       description:
-        "Accompagnement individualisé pour accélérer votre progression technique.",
+        "Cours privés en boxe thaïlandaise et MMA pour un accompagnement personnalisé.",
+    },
+    {
+      title: "Cardio Boxing",
+      description: "Séances Cardio Boxing disponibles sur demande.",
     },
   ],
   audienceCards: [
-    {
-      title: "Kids (dès 8 ans)",
-      description:
-        "Cours adaptés à l'âge pour apprendre discipline, coordination et confiance.",
-    },
-    {
-      title: "Adultes débutants",
-      description:
-        "Un cadre progressif pour apprendre les bases avec méthode et sécurité.",
-    },
-    {
-      title: "Pratiquants confirmés",
-      description:
-        "Séances exigeantes pour perfectionner technique, rythme et stratégie.",
-    },
+    { title: "Enfants dès 8 ans", description: "Cours pédagogiques et structurés." },
+    { title: "Adultes", description: "Séances adaptées au niveau de chacun." },
+    { title: "Débutants", description: "Progression pas à pas sur les fondamentaux." },
+    { title: "Confirmés", description: "Travail technique poussé et intensité maîtrisée." },
   ],
   benefits: [
-    "Amélioration de la condition physique générale",
-    "Renforcement de la confiance et de la discipline",
-    "Progression technique mesurable",
-    "Esprit d'équipe et respect des partenaires",
+    "Coordination, confiance en soi, discipline et respect",
+    "Condition physique améliorée et mental renforcé",
+    "Maîtrise technique en boxe thaïlandaise et MMA",
+    "Progression durable pour tous les profils",
   ],
   schedule: [
     {
@@ -84,23 +85,52 @@ export const siteData = {
       slots: ["Samedi : 16h30 - 18h00"],
     },
   ],
-  pricing: [
-    {
-      title: "Cours collectifs Kids",
-      featured: true,
-      lines: ["Trimestriel : 170 CHF", "Semestriel : 320 CHF", "Annuel : 600 CHF"],
-    },
-    {
-      title: "Cours collectifs Adultes",
-      featured: false,
-      lines: ["Trimestriel : 280 CHF", "Semestriel : 540 CHF", "Annuel : 990 CHF"],
-    },
-    {
-      title: "Carte 10 cours Adultes",
-      featured: false,
-      lines: ["250 CHF", "Valable 6 mois"],
-    },
-  ],
+  scheduleExtras: {
+    privateCourses: "Boxe Thaïlandaise et MMA",
+    cardioBoxing: "Sur demande",
+    notes: [
+      "Les cours du samedi sont sur inscription.",
+      "Un minimum de 3 participants est nécessaire pour que le cours ait lieu.",
+    ],
+  },
+  pricing: {
+    collective: [
+      {
+        title: "Cours collectifs - Kids (8+)",
+        lines: ["Trimestriel : 170 CHF", "Semestriel : 320 CHF", "Annuel : 600 CHF"],
+        featured: true,
+      },
+      {
+        title: "Cours collectifs - Adultes",
+        lines: ["Trimestriel : 280 CHF", "Semestriel : 540 CHF", "Annuel : 990 CHF"],
+        featured: false,
+      },
+    ],
+    privateCourses: [
+      {
+        title: "Cours privés - Adultes",
+        lines: ["Unité : 120 CHF", "5 cours : 550 CHF", "10 cours : 1000 CHF"],
+        featured: false,
+      },
+      {
+        title: "Cours privés - Kids",
+        lines: ["Unité : 75 CHF", "5 cours : 350 CHF", "10 cours : 650 CHF"],
+        featured: false,
+      },
+    ],
+    cards10: [
+      {
+        title: "Carte 10 cours - Adultes",
+        lines: ["250 CHF", "Valable 6 mois"],
+        featured: false,
+      },
+      {
+        title: "Carte 10 cours - Kids",
+        lines: ["180 CHF", "Valable 6 mois"],
+        featured: false,
+      },
+    ],
+  },
   gallery: [
     "Séance technique de boxe thaïlandaise",
     "Entraînement MMA collectif",
@@ -123,22 +153,32 @@ export const siteData = {
     {
       question: "Proposez-vous des cours privés ?",
       answer:
-        "Oui, des cours individuels sont possibles sur demande selon les disponibilités.",
+        "Oui, en boxe thaïlandaise et en MMA, avec des formules à l'unité, 5 cours ou 10 cours.",
+    },
+    {
+      question: "Comment fonctionnent les cours du samedi ?",
+      answer:
+        "Les cours du samedi sont sur inscription, avec un minimum de 3 participants pour que le cours ait lieu.",
+    },
+    {
+      question: "Proposez-vous du Cardio Boxing ?",
+      answer: "Oui, des séances Cardio Boxing sont proposées sur demande.",
     },
     {
       question: "Où se situe la salle ?",
-      answer: "Le club est situé à Gland, en Suisse.",
+      answer: "Route de Nyon 21 - Gland, Suisse.",
     },
   ],
   contact: {
-    sectionTitle: "Contact",
+    sectionTitle: "Prenez contact avec Martial Spirit Gym",
     description:
-      "Réservez un essai, posez vos questions ou demandez un accompagnement personnalisé.",
-    phone: "+41 79 000 00 00",
-    email: "contact@martialspiritgym.ch",
-    address: "Martial Spirit Gym, Gland, Suisse",
+      "Réservez un cours d'essai, posez vos questions ou demandez un accompagnement personnalisé.",
+    phone: "078 905 08 83",
+    email: "martialspiritcoaching@gmail.com",
+    instagram: "https://www.instagram.com/martialspiritcoaching/",
+    address: "Route de Nyon 21 - Gland, Suisse",
     ctaLabel: "Demander un cours d'essai",
-    ctaHref: "mailto:contact@martialspiritgym.ch",
+    ctaHref: "mailto:martialspiritcoaching@gmail.com",
   },
   nav: [
     { label: "Accueil", href: "#hero" },

@@ -9,10 +9,10 @@ export default function Audience() {
         <SectionTitle
           eyebrow="Pour qui ?"
           title="Des cours pensés pour chaque profil"
-          description="Kids, adultes débutants ou pratiquants expérimentés : chaque groupe a son accompagnement."
+          description="Enfants dès 8 ans, adultes, débutants et confirmés : chaque pratiquant trouve sa place."
         />
 
-        <div className="mt-10 grid gap-6 md:grid-cols-3">
+        <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {siteData.audienceCards.map((card) => (
             <article
               key={card.title}

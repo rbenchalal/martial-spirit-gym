@@ -9,7 +9,7 @@ export default function Benefits() {
         <SectionTitle
           eyebrow="Bénéfices"
           title="Ce que vous développez au club"
-          description="Au-delà de la performance, nous travaillons la maîtrise, la régularité et la confiance."
+          description="Les entraînements renforcent la technique, le physique et le mental dans la durée."
         />
 
         <div className="mt-10 grid gap-4 sm:grid-cols-2">

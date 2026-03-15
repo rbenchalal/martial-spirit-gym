@@ -12,6 +12,11 @@ export default function About() {
           description={siteData.about.text}
         />
 
+        <div className="mt-8 rounded-2xl border border-white/10 bg-zinc-900 p-6">
+          <h3 className="text-xl font-semibold text-white">{siteData.about.kidsTitle}</h3>
+          <p className="mt-3 leading-7 text-zinc-300">{siteData.about.kidsText}</p>
+        </div>
+
         <div className="mt-10 grid gap-4 md:grid-cols-3">
           {siteData.about.points.map((point) => (
             <div

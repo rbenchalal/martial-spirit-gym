@@ -27,6 +27,30 @@ export default function Schedule() {
             </article>
           ))}
         </div>
+
+        <div className="mt-8 grid gap-4 lg:grid-cols-2">
+          <div className="rounded-2xl border border-white/10 bg-zinc-900 p-6">
+            <p className="text-sm text-zinc-400">Cours privés</p>
+            <p className="mt-2 text-lg font-semibold text-white">
+              {siteData.scheduleExtras.privateCourses}
+            </p>
+          </div>
+          <div className="rounded-2xl border border-white/10 bg-zinc-900 p-6">
+            <p className="text-sm text-zinc-400">Cardio Boxing</p>
+            <p className="mt-2 text-lg font-semibold text-white">
+              {siteData.scheduleExtras.cardioBoxing}
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-6 rounded-2xl border border-red-500/30 bg-red-500/10 p-6">
+          <h3 className="text-lg font-semibold text-white">Informations importantes</h3>
+          <ul className="mt-3 space-y-2 text-zinc-200">
+            {siteData.scheduleExtras.notes.map((note) => (
+              <li key={note}>{note}</li>
+            ))}
+          </ul>
+        </div>
       </Container>
     </section>
   );

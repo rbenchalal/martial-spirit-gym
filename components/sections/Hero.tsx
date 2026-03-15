@@ -15,6 +15,10 @@ export default function Hero() {
           {siteData.hero.title}
         </h1>
 
+        <p className="mt-4 text-sm font-medium uppercase tracking-[0.16em] text-zinc-400">
+          {siteData.positioning}
+        </p>
+
         <p className="mt-6 max-w-2xl text-base leading-8 text-zinc-300 sm:text-lg">
           {siteData.hero.description}
         </p>

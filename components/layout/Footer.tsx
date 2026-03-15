@@ -8,7 +8,19 @@ export default function Footer() {
         <div>
           <p className="text-lg font-semibold text-white">{siteData.name}</p>
           <p className="mt-2 text-sm text-zinc-400">
-            {siteData.disciplines} - {siteData.city}
+            {siteData.positioning}
+          </p>
+          <p className="mt-1 text-sm text-zinc-500">{siteData.address}</p>
+          <a
+            href={siteData.instagram}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-2 inline-block text-sm text-zinc-300 transition hover:text-white"
+          >
+            Instagram
+          </a>
+          <p className="mt-1 text-sm text-zinc-500">
+            {siteData.phone} - {siteData.email}
           </p>
         </div>
 

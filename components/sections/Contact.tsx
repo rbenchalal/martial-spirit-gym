@@ -31,6 +31,16 @@ export default function Contact() {
               {siteData.contact.email}
             </a>
 
+            <p className="mt-6 text-sm text-zinc-400">Instagram</p>
+            <a
+              href={siteData.contact.instagram}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-2 block text-lg font-semibold text-white"
+            >
+              @martialspiritcoaching
+            </a>
+
             <p className="mt-6 text-sm text-zinc-400">Adresse</p>
             <p className="mt-2 text-lg font-semibold text-white">{siteData.contact.address}</p>
 
@@ -47,8 +57,8 @@ export default function Contact() {
               {siteData.name} - {siteData.city}
             </h3>
             <p className="mt-4 leading-7 text-zinc-300">
-              Situé à Gland, le club est accessible pour les pratiquants de la région.
-              Contactez-nous pour organiser un premier cours d'essai.
+              Retrouve-nous à {siteData.address}. Contacte-nous pour réserver un cours
+              d'essai en boxe thaïlandaise ou MMA.
             </p>
           </div>
         </div>

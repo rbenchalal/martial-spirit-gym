@@ -9,7 +9,7 @@ export default function FAQ() {
         <SectionTitle
           eyebrow="FAQ"
           title="Questions fréquentes"
-          description="Les réponses aux questions les plus courantes avant de commencer."
+          description="Informations pratiques sur les inscriptions, les niveaux et le fonctionnement des cours."
         />
 
         <div className="mt-10 space-y-4">
