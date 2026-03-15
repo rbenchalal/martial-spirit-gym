@@ -1,6 +1,7 @@
 export const siteData = {
   name: "Martial Spirit Gym",
-  positioning: "École d'arts martiaux - Boxe Thaïlandaise & MMA",
+  positioning:
+    "École d'arts martiaux à Gland - Boxe Thaïlandaise (Muay Thai), MMA et préparation physique",
   city: "Gland",
   address: "Route de Nyon 21 - Gland, Suisse",
   phone: "078 905 08 83",
@@ -27,32 +28,32 @@ export const siteData = {
     },
   ],
   logo: "/images/logo-martial-spirit-gym.jpeg",
-  disciplines: "Boxe Thaïlandaise & MMA",
+  disciplines: "Boxe Thaïlandaise, MMA & Préparation physique",
   audience: ["Enfants dès 8 ans", "Adultes", "Débutants", "Confirmés"],
   hero: {
     badge: "Martial Spirit Gym",
-    title: "Boxe Thaïlandaise & MMA à Gland pour Kids et Adultes",
+    title: "Boxe Thaïlandaise, MMA & Préparation physique à Gland",
     description:
-      "Martial Spirit Gym est une école dédiée à la pratique de la boxe thaïlandaise (Muay Thaï) et du MMA. Les cours sont accessibles aux enfants et aux adultes, débutants comme pratiquants confirmés.",
+      "Martial Spirit Gym est une école d'arts martiaux située à Gland, au cœur de la région de La Côte entre Nyon et Morges. Nous proposons des cours de boxe thaïlandaise (Muay Thai), MMA et préparation physique pour enfants et adultes, du débutant au pratiquant confirmé.",
     primaryCta: { label: "Voir le planning", href: "#planning" },
     secondaryCta: { label: "Voir les tarifs", href: "#tarifs" },
     highlights: [
       { label: "Positionnement", value: "École d'arts martiaux premium" },
-      { label: "Disciplines", value: "Muay Thaï & MMA" },
+      { label: "Disciplines", value: "Muay Thaï, MMA & Conditioning" },
       { label: "Cours", value: "Collectifs & privés" },
       { label: "Lieu", value: "Route de Nyon 21 - Gland" },
     ],
   },
   about: {
-    title: "Une école dédiée à la progression de chaque pratiquant",
-    text: "Martial Spirit Gym est une école dédiée à la pratique de la boxe thaïlandaise (Muay Thaï) et du MMA. Les cours sont accessibles aux enfants et aux adultes, débutants comme pratiquants confirmés.",
+    title: "Une école d'arts martiaux à Gland, au service de votre progression",
+    text: "Notre objectif est de transmettre les valeurs des arts martiaux : respect, discipline, confiance en soi et dépassement personnel, dans un cadre dynamique et motivant. Si vous recherchez des cours de boxe thaï à Gland, un club de MMA près de Nyon, ou une école d'arts martiaux sur La Côte entre Nyon et Morges, Martial Spirit Gym vous accueille pour découvrir et progresser dans les sports de combat.",
     kidsTitle: "Cours enfants",
     kidsText:
       "Les cours enfants développent la coordination, la confiance en soi, la discipline et le respect dans un environnement pédagogique et sécurisé.",
     points: [
       "Encadrement pédagogique adapté à tous les niveaux",
       "Travail technique, physique et mental dans chaque séance",
-      "Cadre sérieux, bienveillant et sécurisé",
+      "Cadre sérieux, bienveillant, sécurisé et motivant",
     ],
   },
   disciplineCards: [
@@ -84,7 +85,7 @@ export const siteData = {
   conditioning: {
     title: "Martial Spirit Conditioning",
     description:
-      "Service complémentaire orienté préparation physique et développement athlétique, avec des séances construites pour renforcer le corps et le mental.",
+      "Service complémentaire de préparation physique orienté développement athlétique, avec des séances construites pour renforcer le corps, le mental et la performance globale.",
     pillars: [
       "Calisthenics",
       "Pliométrie",
@@ -118,7 +119,7 @@ export const siteData = {
     },
   ],
   benefits: [
-    "Coordination, confiance en soi, discipline et respect",
+    "Respect, discipline, confiance en soi et dépassement personnel",
     "Condition physique améliorée et mental renforcé",
     "Maîtrise technique en boxe thaïlandaise et MMA",
     "Progression durable pour tous les profils",
