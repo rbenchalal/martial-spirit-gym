@@ -6,6 +6,26 @@ export const siteData = {
   phone: "078 905 08 83",
   email: "martialspiritcoaching@gmail.com",
   instagram: "https://www.instagram.com/martialspiritcoaching/",
+  socialLinks: [
+    {
+      platform: "instagram",
+      label: "Instagram",
+      href: "https://www.instagram.com/martialspiritcoaching/",
+      ariaLabel: "Ouvrir le profil Instagram de Martial Spirit Gym",
+    },
+    {
+      platform: "facebook",
+      label: "Facebook 1",
+      href: "https://www.facebook.com/share/1Af5ZKG2Z3/?mibextid=wwXIfr",
+      ariaLabel: "Ouvrir le premier lien Facebook de Martial Spirit Gym",
+    },
+    {
+      platform: "facebook",
+      label: "Facebook 2",
+      href: "https://www.facebook.com/share/184P77dXmr/?mibextid=wwXIfr",
+      ariaLabel: "Ouvrir le second lien Facebook de Martial Spirit Gym",
+    },
+  ],
   logo: "/images/logo-martial-spirit-gym.jpeg",
   disciplines: "Boxe Thaïlandaise & MMA",
   audience: ["Enfants dès 8 ans", "Adultes", "Débutants", "Confirmés"],
@@ -55,18 +75,55 @@ export const siteData = {
       title: "Cardio Boxing",
       description: "Séances Cardio Boxing disponibles sur demande.",
     },
+    {
+      title: "Martial Spirit Conditioning",
+      description:
+        "Entraînement varié, ludique et structuré, principalement basé sur le travail au poids du corps pour développer l'athlétisme global.",
+    },
   ],
+  conditioning: {
+    title: "Martial Spirit Conditioning",
+    description:
+      "Service complémentaire orienté préparation physique et développement athlétique, avec des séances construites pour renforcer le corps et le mental.",
+    pillars: [
+      "Calisthenics",
+      "Pliométrie",
+      "Préparation physique",
+      "Mobilité",
+      "Souplesse",
+      "Cardio boxing",
+    ],
+    method:
+      "Chaque séance est variée, ludique et structurée, principalement basée sur le travail au poids du corps.",
+    outcomes: [
+      "Force fonctionnelle",
+      "Explosivité et vitesse",
+      "Prévention des blessures",
+      "Condition physique, mental, endurance et résistance",
+    ],
+    format:
+      "Les séances peuvent se dérouler en intérieur ou en extérieur selon les conditions et le type de séance.",
+    finish:
+      "Chaque séance peut se terminer par un finish en cardio boxing selon l'objectif de travail.",
+  },
   audienceCards: [
     { title: "Enfants dès 8 ans", description: "Cours pédagogiques et structurés." },
     { title: "Adultes", description: "Séances adaptées au niveau de chacun." },
     { title: "Débutants", description: "Progression pas à pas sur les fondamentaux." },
     { title: "Confirmés", description: "Travail technique poussé et intensité maîtrisée." },
+    {
+      title: "Conditioning",
+      description:
+        "Pour celles et ceux qui veulent développer leur préparation physique et leurs qualités athlétiques.",
+    },
   ],
   benefits: [
     "Coordination, confiance en soi, discipline et respect",
     "Condition physique améliorée et mental renforcé",
     "Maîtrise technique en boxe thaïlandaise et MMA",
     "Progression durable pour tous les profils",
+    "Développement athlétique basé sur le poids du corps",
+    "Explosivité, vitesse et prévention des blessures",
   ],
   schedule: [
     {

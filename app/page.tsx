@@ -3,6 +3,7 @@ import Navbar from "@/components/layout/Navbar";
 import About from "@/components/sections/About";
 import Audience from "@/components/sections/Audience";
 import Benefits from "@/components/sections/Benefits";
+import Conditioning from "@/components/sections/Conditioning";
 import Contact from "@/components/sections/Contact";
 import Disciplines from "@/components/sections/Disciplines";
 import FAQ from "@/components/sections/FAQ";
@@ -20,6 +21,7 @@ export default function Home() {
         <Hero />
         <About />
         <Disciplines />
+        <Conditioning />
         <Audience />
         <Benefits />
         <Schedule />
