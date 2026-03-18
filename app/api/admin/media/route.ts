@@ -1,4 +1,4 @@
-import { del, list, put } from "@vercel/blob";
+import { del, list } from "@vercel/blob";
 import { NextResponse } from "next/server";
 
 type ErrorBody = { error: string };
@@ -14,10 +14,6 @@ function getErrorMessage(error: unknown) {
   return "Erreur inconnue.";
 }
 
-function sanitizeFilename(name: string) {
-  return name.replaceAll(/[^a-zA-Z0-9._-]/g, "-");
-}
-
 export async function GET() {
   try {
     const { blobs } = await list();
@@ -28,40 +24,6 @@ export async function GET() {
   } catch (error) {
     console.error("Failed to list blobs", error);
     return jsonError(`Impossible de recuperer les medias. ${getErrorMessage(error)}`, 500);
-  }
-}
-
-export async function POST(request: Request) {
-  try {
-    const formData = await request.formData();
-    const file = formData.get("file");
-
-    if (!(file instanceof File)) {
-      return jsonError("Aucun fichier valide n'a ete fourni.", 400);
-    }
-
-    const isImage = file.type.startsWith("image/");
-    const isVideo = file.type.startsWith("video/");
-
-    if (!isImage && !isVideo) {
-      return jsonError("Seuls les fichiers image et video sont autorises.", 400);
-    }
-
-    const pathname = `admin-media/${Date.now()}-${sanitizeFilename(file.name)}`;
-
-    const blob = await put(pathname, file, {
-      access: "public",
-      addRandomSuffix: true,
-      contentType: file.type,
-    });
-
-    return NextResponse.json({
-      media: blob,
-      message: "Upload termine avec succes.",
-    });
-  } catch (error) {
-    console.error("Failed to upload blob", error);
-    return jsonError(`Erreur pendant l'upload du media. ${getErrorMessage(error)}`, 500);
   }
 }
 

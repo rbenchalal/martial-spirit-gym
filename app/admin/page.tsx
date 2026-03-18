@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { upload } from "@vercel/blob/client";
 import { editableContent } from "@/lib/editable-content";
 import type { EditableGalleryItem } from "@/lib/editable-gallery";
 
@@ -159,6 +160,14 @@ function blobToFeaturedVideo(media: MediaItem): EditableFeaturedVideo {
   };
 }
 
+async function readJsonSafely<T>(response: Response): Promise<T | null> {
+  try {
+    return (await response.json()) as T;
+  } catch {
+    return null;
+  }
+}
+
 export default function AdminPage() {
   const router = useRouter();
   const [media, setMedia] = useState<MediaItem[]>([]);
@@ -226,13 +235,13 @@ export default function AdminPage() {
     setErrorMessage(null);
     try {
       const response = await fetch("/api/admin/media");
-      const data = (await response.json()) as { media?: MediaItem[]; error?: string };
+      const data = await readJsonSafely<{ media?: MediaItem[]; error?: string }>(response);
 
       if (!response.ok) {
-        throw new Error(data.error ?? "Impossible de charger les medias.");
+        throw new Error(data?.error ?? "Impossible de charger les medias.");
       }
 
-      setMedia(data.media ?? []);
+      setMedia(data?.media ?? []);
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Impossible de charger les medias.";
@@ -552,21 +561,13 @@ export default function AdminPage() {
     setStatusMessage(null);
 
     try {
-      const formData = new FormData();
-      formData.append("file", selectedFile);
-
-      const response = await fetch("/api/admin/media", {
-        method: "POST",
-        body: formData,
+      const safeFilename = selectedFile.name.replaceAll(/[^a-zA-Z0-9._-]/g, "-");
+      await upload(safeFilename, selectedFile, {
+        access: "public",
+        handleUploadUrl: "/api/admin/media/upload",
       });
 
-      const data = (await response.json()) as { message?: string; error?: string };
-
-      if (!response.ok) {
-        throw new Error(data.error ?? "Erreur pendant l'upload.");
-      }
-
-      setStatusMessage(data.message ?? "Media envoye avec succes.");
+      setStatusMessage("Upload termine avec succes.");
       setSelectedFile(null);
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
@@ -595,13 +596,13 @@ export default function AdminPage() {
         body: JSON.stringify({ url }),
       });
 
-      const data = (await response.json()) as { message?: string; error?: string };
+      const data = await readJsonSafely<{ message?: string; error?: string }>(response);
 
       if (!response.ok) {
-        throw new Error(data.error ?? "Erreur pendant la suppression.");
+        throw new Error(data?.error ?? "Erreur pendant la suppression.");
       }
 
-      setStatusMessage(data.message ?? "Media supprime avec succes.");
+      setStatusMessage(data?.message ?? "Media supprime avec succes.");
       await loadMedia();
     } catch (error) {
       const message =
