@@ -22,6 +22,15 @@ function sanitizeFilename(name: string) {
   return name.replaceAll(/[^a-zA-Z0-9._-]/g, "-");
 }
 
+function buildAdminMediaPathname(pathname: string) {
+  const normalized = pathname.replace(/^\/+/, "");
+  const name = normalized.startsWith("admin-media/")
+    ? normalized.slice("admin-media/".length)
+    : normalized;
+
+  return `admin-media/${sanitizeFilename(name)}`;
+}
+
 export async function POST(request: NextRequest): Promise<NextResponse> {
   const sessionCookie = request.cookies.get(SESSION_COOKIE_NAME)?.value;
   if (sessionCookie !== SESSION_COOKIE_VALUE) {
@@ -50,7 +59,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         return {
           allowedContentTypes: ALLOWED_CONTENT_TYPES,
           addRandomSuffix: true,
-          pathname: `admin-media/${Date.now()}-${sanitizeFilename(pathname)}`,
+          pathname: buildAdminMediaPathname(pathname),
         };
       },
       onUploadCompleted: async () => {

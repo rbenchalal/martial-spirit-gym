@@ -16,8 +16,7 @@ function getErrorMessage(error: unknown) {
 
 export async function GET() {
   try {
-    const { blobs } = await list();
-    const media = blobs.filter((blob) => blob.pathname.startsWith("admin-media/"));
+    const { blobs: media } = await list({ prefix: "admin-media/" });
 
     return NextResponse.json({
       media,

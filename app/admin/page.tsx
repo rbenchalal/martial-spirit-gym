@@ -562,7 +562,7 @@ export default function AdminPage() {
 
     try {
       const safeFilename = selectedFile.name.replaceAll(/[^a-zA-Z0-9._-]/g, "-");
-      await upload(safeFilename, selectedFile, {
+      await upload(`admin-media/${safeFilename}`, selectedFile, {
         access: "public",
         handleUploadUrl: "/api/admin/media/upload",
       });
