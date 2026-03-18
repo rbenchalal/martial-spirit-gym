@@ -1,6 +1,35 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Container from "@/components/ui/Container";
 import { siteData } from "@/lib/data";
 import Image from "next/image";
+
+type EditableContact = {
+  phone: string;
+  email: string;
+  address: string;
+};
+
+type EditableSocialLink = {
+  platform: string;
+  label: string;
+  href: string;
+  ariaLabel: string;
+};
+
+const fallbackContact: EditableContact = {
+  phone: siteData.phone,
+  email: siteData.email,
+  address: siteData.address,
+};
+
+const fallbackSocialLinks: EditableSocialLink[] = siteData.socialLinks.map((link) => ({
+  platform: link.platform,
+  label: link.label,
+  href: link.href,
+  ariaLabel: link.ariaLabel,
+}));
 
 function SocialIcon({ platform }: { platform: string }) {
   if (platform === "instagram") {
@@ -24,6 +53,61 @@ function SocialIcon({ platform }: { platform: string }) {
 }
 
 export default function Footer() {
+  const [contact, setContact] = useState<EditableContact>(fallbackContact);
+  const [socialLinks, setSocialLinks] = useState<EditableSocialLink[]>(fallbackSocialLinks);
+
+  useEffect(() => {
+    const loadContact = async () => {
+      try {
+        const response = await fetch("/api/admin/contact");
+        const data = (await response.json()) as {
+          contact?: EditableContact | null;
+        };
+
+        if (!response.ok || !data.contact) {
+          setContact(fallbackContact);
+          return;
+        }
+
+        setContact({
+          phone: data.contact.phone || fallbackContact.phone,
+          email: data.contact.email || fallbackContact.email,
+          address: data.contact.address || fallbackContact.address,
+        });
+      } catch {
+        setContact(fallbackContact);
+      }
+    };
+
+    const loadSocialLinks = async () => {
+      try {
+        const response = await fetch("/api/admin/social-links");
+        const data = (await response.json()) as {
+          socialLinks?: EditableSocialLink[] | null;
+        };
+
+        if (!response.ok || !Array.isArray(data.socialLinks) || data.socialLinks.length === 0) {
+          setSocialLinks(fallbackSocialLinks);
+          return;
+        }
+
+        setSocialLinks(
+          data.socialLinks.map((link) => ({
+            platform: link.platform || "",
+            label: link.label || "",
+            href: link.href || "",
+            ariaLabel: link.ariaLabel || "",
+          })),
+        );
+      } catch {
+        setSocialLinks(fallbackSocialLinks);
+      }
+    };
+
+    void loadContact();
+    void loadSocialLinks();
+  }, []);
+
   return (
     <footer className="relative overflow-hidden border-t border-white/10 bg-black">
       <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-red-500/60 to-transparent" />
@@ -63,9 +147,9 @@ export default function Footer() {
             </div>
 
             <p className="mt-4 max-w-md text-sm leading-7 text-zinc-300">{siteData.positioning}</p>
-            <p className="mt-2 text-sm text-zinc-500">{siteData.address}</p>
+            <p className="mt-2 text-sm text-zinc-500">{contact.address}</p>
             <p className="mt-1 text-sm text-zinc-500">
-              {siteData.phone} - {siteData.email}
+              {contact.phone} - {contact.email}
             </p>
           </div>
 
@@ -87,7 +171,7 @@ export default function Footer() {
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-zinc-400">Réseaux sociaux</p>
             <div className="mt-4 flex flex-wrap gap-2">
-              {siteData.socialLinks.map((social) => (
+              {socialLinks.map((social) => (
                 <a
                   key={social.href}
                   href={social.href}

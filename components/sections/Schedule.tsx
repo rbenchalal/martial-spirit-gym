@@ -1,8 +1,50 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Container from "@/components/ui/Container";
 import SectionTitle from "@/components/ui/SectionTitle";
 import { siteData } from "@/lib/data";
 
+type EditableScheduleSession = {
+  title: string;
+  slots: string[];
+};
+
+const fallbackSchedule: EditableScheduleSession[] = siteData.schedule.map((session) => ({
+  title: session.title,
+  slots: [...session.slots],
+}));
+
 export default function Schedule() {
+  const [schedule, setSchedule] = useState<EditableScheduleSession[]>(fallbackSchedule);
+
+  useEffect(() => {
+    const loadSchedule = async () => {
+      try {
+        const response = await fetch("/api/admin/schedule");
+        const data = (await response.json()) as {
+          schedule?: EditableScheduleSession[] | null;
+        };
+
+        if (!response.ok || !Array.isArray(data.schedule) || data.schedule.length === 0) {
+          setSchedule(fallbackSchedule);
+          return;
+        }
+
+        setSchedule(
+          data.schedule.map((session) => ({
+            title: session.title || "",
+            slots: Array.isArray(session.slots) ? session.slots : [],
+          })),
+        );
+      } catch {
+        setSchedule(fallbackSchedule);
+      }
+    };
+
+    void loadSchedule();
+  }, []);
+
   const getAudienceLabel = (title: string) =>
     title.includes("Kids") ? "Kids" : "Adultes";
   const getDisciplineLabel = (title: string) =>
@@ -18,7 +60,7 @@ export default function Schedule() {
         />
 
         <div className="mt-10 grid gap-6 md:grid-cols-2">
-          {siteData.schedule.map((item) => (
+          {schedule.map((item) => (
             <article
               key={item.title}
               className="rounded-2xl border border-white/10 bg-gradient-to-b from-zinc-900 to-black p-6 shadow-[0_14px_34px_rgba(0,0,0,0.35)]"

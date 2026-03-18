@@ -1,15 +1,58 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Container from "@/components/ui/Container";
 import SectionTitle from "@/components/ui/SectionTitle";
 import { siteData } from "@/lib/data";
 
+type EditableConditioning = {
+  title: string;
+  description: string;
+};
+
+const fallbackConditioning: EditableConditioning = {
+  title: siteData.conditioning.title,
+  description: siteData.conditioning.description,
+};
+
 export default function Conditioning() {
+  const [conditioning, setConditioning] = useState<EditableConditioning>(
+    fallbackConditioning,
+  );
+
+  useEffect(() => {
+    const loadConditioning = async () => {
+      try {
+        const response = await fetch("/api/admin/conditioning");
+        const data = (await response.json()) as {
+          conditioning?: EditableConditioning | null;
+        };
+
+        if (!response.ok || !data.conditioning) {
+          setConditioning(fallbackConditioning);
+          return;
+        }
+
+        setConditioning({
+          title: data.conditioning.title || fallbackConditioning.title,
+          description:
+            data.conditioning.description || fallbackConditioning.description,
+        });
+      } catch {
+        setConditioning(fallbackConditioning);
+      }
+    };
+
+    void loadConditioning();
+  }, []);
+
   return (
     <section id="conditioning" className="border-b border-white/10 py-20">
       <Container>
         <SectionTitle
           eyebrow="Conditioning"
-          title={siteData.conditioning.title}
-          description={siteData.conditioning.description}
+          title={conditioning.title}
+          description={conditioning.description}
         />
 
         <div className="mt-10 grid gap-6 lg:grid-cols-2">

@@ -27,7 +27,7 @@ function isValidGalleryItem(item: unknown): item is EditableGalleryItem {
 
 export async function GET() {
   try {
-    const gallery = readEditableGallery();
+    const gallery = await readEditableGallery();
     return NextResponse.json({ gallery });
   } catch (error) {
     console.error("Failed to read editable gallery", error);
@@ -48,7 +48,7 @@ export async function POST(request: Request) {
       return jsonError("Le format des elements de galerie est invalide.", 400);
     }
 
-    const gallery = writeEditableGallery(nextGallery);
+    const gallery = await writeEditableGallery(nextGallery);
     return NextResponse.json({
       gallery,
       message: "Galerie dynamique mise a jour.",

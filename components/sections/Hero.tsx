@@ -1,10 +1,48 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Container from "@/components/ui/Container";
 import InfoBadge from "@/components/ui/InfoBadge";
 import PrimaryButton from "@/components/ui/PrimaryButton";
 import { siteData } from "@/lib/data";
 import Image from "next/image";
 
+type EditableHero = {
+  title: string;
+  description: string;
+};
+
+const fallbackHero: EditableHero = {
+  title: siteData.hero.title,
+  description: siteData.hero.description,
+};
+
 export default function Hero() {
+  const [hero, setHero] = useState<EditableHero>(fallbackHero);
+
+  useEffect(() => {
+    const loadHero = async () => {
+      try {
+        const response = await fetch("/api/admin/hero");
+        const data = (await response.json()) as { hero?: EditableHero | null };
+
+        if (!response.ok || !data.hero) {
+          setHero(fallbackHero);
+          return;
+        }
+
+        setHero({
+          title: data.hero.title || fallbackHero.title,
+          description: data.hero.description || fallbackHero.description,
+        });
+      } catch {
+        setHero(fallbackHero);
+      }
+    };
+
+    void loadHero();
+  }, []);
+
   return (
     <section id="hero" className="relative overflow-hidden border-b border-white/10 py-24 sm:py-32 lg:py-36">
       <Image
@@ -40,7 +78,7 @@ export default function Hero() {
             </div>
 
             <h1 className="mt-6 max-w-4xl text-4xl font-bold leading-[1.04] tracking-tight text-white drop-shadow-[0_8px_24px_rgba(0,0,0,0.5)] sm:text-5xl md:text-6xl lg:text-7xl">
-              {siteData.hero.title}
+              {hero.title}
             </h1>
 
             <p className="mt-6 max-w-3xl border-l-2 border-red-500/60 pl-4 text-sm font-medium uppercase tracking-[0.2em] text-zinc-200 sm:text-base">
@@ -48,7 +86,7 @@ export default function Hero() {
             </p>
 
             <p className="mt-8 max-w-3xl text-base leading-8 text-zinc-100/95 sm:text-lg">
-              {siteData.hero.description}
+              {hero.description}
             </p>
 
             <div className="mt-10 flex flex-col gap-4 sm:flex-row sm:items-center">
