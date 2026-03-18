@@ -17,9 +17,10 @@ function getErrorMessage(error: unknown) {
 export async function GET() {
   try {
     const { blobs } = await list();
+    const media = blobs.filter((blob) => blob.pathname.startsWith("admin-media/"));
 
     return NextResponse.json({
-      media: blobs,
+      media,
     });
   } catch (error) {
     console.error("Failed to list blobs", error);
