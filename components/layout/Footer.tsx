@@ -55,6 +55,7 @@ function SocialIcon({ platform }: { platform: string }) {
 export default function Footer() {
   const [contact, setContact] = useState<EditableContact>(fallbackContact);
   const [socialLinks, setSocialLinks] = useState<EditableSocialLink[]>(fallbackSocialLinks);
+  const sectionHref = (href: string) => (href.startsWith("#") ? `/${href}` : href);
 
   useEffect(() => {
     const loadContact = async () => {
@@ -123,7 +124,7 @@ export default function Footer() {
             </p>
           </div>
           <a
-            href="#contact"
+            href="/#contact"
             className="inline-flex items-center justify-center rounded-full bg-red-600 px-5 py-2.5 text-sm font-semibold text-white transition duration-200 md:hover:-translate-y-0.5 hover:bg-red-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/60"
           >
             Contacter le club
@@ -159,7 +160,7 @@ export default function Footer() {
               {siteData.nav.map((item) => (
                 <a
                   key={item.href}
-                  href={item.href}
+                  href={sectionHref(item.href)}
                   className="text-zinc-300 transition duration-200 md:hover:translate-x-0.5 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/60"
                 >
                   {item.label}
