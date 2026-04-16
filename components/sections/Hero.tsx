@@ -17,8 +17,8 @@ export default function Hero() {
         sizes="100vw"
         className="object-cover md:scale-[1.02]"
       />
-      <div className="absolute inset-0 bg-black/60" />
-      <div className="absolute inset-0 bg-gradient-to-br from-black/90 via-black/60 to-black/90" />
+      <div className="absolute inset-0 bg-black/70" />
+      <div className="absolute inset-0 bg-gradient-to-br from-black/95 via-black/70 to-black/95" />
       <div className="absolute -left-16 top-20 hidden h-56 w-56 rounded-full bg-red-700/25 blur-3xl sm:block sm:h-72 sm:w-72" />
       <div className="absolute -right-10 bottom-10 hidden h-56 w-56 rounded-full bg-red-600/15 blur-3xl sm:block sm:h-72 sm:w-72" />
       <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-red-500/70 to-transparent" />
@@ -26,13 +26,13 @@ export default function Hero() {
       <Container className="relative z-10">
         <div className="grid items-end gap-12 lg:grid-cols-[1.6fr_1fr]">
           <div>
-            <div className="mb-8 inline-flex items-center gap-4 rounded-2xl border border-white/15 bg-zinc-900/70 p-3 pr-5 shadow-[0_12px_30px_rgba(0,0,0,0.35)]">
+            <div className="mb-10 inline-flex items-center gap-4 rounded-2xl border border-white/15 bg-zinc-900/70 p-3 pr-5 shadow-[0_12px_30px_rgba(0,0,0,0.35)]">
               <Image
                 src={siteData.logo}
                 alt={`Logo ${siteData.name} à Gland`}
-                width={72}
-                height={72}
-                className="h-14 w-14 rounded-xl border border-white/10 object-cover sm:h-[72px] sm:w-[72px]"
+                width={96}
+                height={96}
+                className="h-16 w-16 rounded-xl border border-white/10 object-cover sm:h-24 sm:w-24"
                 priority
               />
               <div>
@@ -41,7 +41,7 @@ export default function Hero() {
               </div>
             </div>
 
-            <h1 className="mt-6 max-w-4xl text-4xl font-bold leading-[1.04] tracking-tight text-white drop-shadow-[0_8px_24px_rgba(0,0,0,0.5)] sm:text-5xl md:text-6xl lg:text-7xl">
+            <h1 className="mt-8 max-w-4xl text-4xl font-bold leading-[1.04] tracking-tight text-white drop-shadow-[0_8px_24px_rgba(0,0,0,0.5)] sm:text-5xl md:text-6xl lg:text-7xl">
               Club d’arts martiaux à Gland
             </h1>
 

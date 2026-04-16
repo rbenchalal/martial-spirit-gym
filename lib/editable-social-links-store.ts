@@ -32,6 +32,25 @@ function isValidSocialLink(value: unknown): value is EditableSocialLink {
   );
 }
 
+function dedupeByPlatform(links: EditableSocialLink[]): EditableSocialLink[] {
+  const seen = new Set<string>();
+  const result: EditableSocialLink[] = [];
+
+  for (const link of links) {
+    const key = link.platform.trim().toLowerCase();
+    if (!key) {
+      continue;
+    }
+    if (seen.has(key)) {
+      continue;
+    }
+    seen.add(key);
+    result.push(link);
+  }
+
+  return result;
+}
+
 export async function readEditableSocialLinks(): Promise<EditableSocialLink[] | null> {
   const stored = await kv.get<unknown>(EDITABLE_SOCIAL_LINKS_KV_KEY);
   if (!Array.isArray(stored)) {
@@ -39,13 +58,13 @@ export async function readEditableSocialLinks(): Promise<EditableSocialLink[] | 
   }
 
   const validLinks = stored.filter(isValidSocialLink);
-  return validLinks.map(normalizeSocialLink);
+  return dedupeByPlatform(validLinks.map(normalizeSocialLink));
 }
 
 export async function writeEditableSocialLinks(
   nextValue: EditableSocialLink[],
 ): Promise<EditableSocialLink[]> {
-  const normalized = nextValue.map(normalizeSocialLink);
+  const normalized = dedupeByPlatform(nextValue.map(normalizeSocialLink));
   await kv.set(EDITABLE_SOCIAL_LINKS_KV_KEY, normalized);
   return normalized;
 }

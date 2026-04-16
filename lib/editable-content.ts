@@ -18,15 +18,9 @@ export const editableContent = {
     },
     {
       platform: "facebook",
-      label: "Facebook 1",
+      label: "Facebook",
       href: "https://www.facebook.com/share/1Af5ZKG2Z3/?mibextid=wwXIfr",
-      ariaLabel: "Ouvrir le premier lien Facebook de Martial Spirit Gym",
-    },
-    {
-      platform: "facebook",
-      label: "Facebook 2",
-      href: "https://www.facebook.com/share/184P77dXmr/?mibextid=wwXIfr",
-      ariaLabel: "Ouvrir le second lien Facebook de Martial Spirit Gym",
+      ariaLabel: "Ouvrir le Facebook de Martial Spirit Gym",
     },
   ],
   schedule: [
