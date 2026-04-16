@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Container from "@/components/ui/Container";
 import { siteData } from "@/lib/data";
 import Image from "next/image";
+import Link from "next/link";
 
 type EditableContact = {
   phone: string;
@@ -166,6 +167,12 @@ export default function Footer() {
                   {item.label}
                 </a>
               ))}
+              <Link
+                href="/inscription"
+                className="text-zinc-300 transition duration-200 md:hover:translate-x-0.5 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/60"
+              >
+                Inscription
+              </Link>
             </nav>
           </div>
 
