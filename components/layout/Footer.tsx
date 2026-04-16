@@ -135,7 +135,7 @@ export default function Footer() {
             <div className="flex items-center gap-3">
               <Image
                 src={siteData.logo}
-                alt={`Logo ${siteData.name}`}
+                alt={`Logo ${siteData.name} à Gland`}
                 width={48}
                 height={48}
                 className="h-12 w-12 rounded-xl border border-white/10 object-cover"
@@ -171,9 +171,9 @@ export default function Footer() {
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-zinc-400">Réseaux sociaux</p>
             <div className="mt-4 flex flex-wrap gap-2">
-              {socialLinks.map((social) => (
+              {socialLinks.map((social, index) => (
                 <a
-                  key={social.href}
+                  key={`${social.href}-${index}`}
                   href={social.href}
                   target="_blank"
                   rel="noopener noreferrer"

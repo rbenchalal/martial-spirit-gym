@@ -16,7 +16,7 @@ export default function Navbar() {
           <a href="#hero" className="group flex min-w-0 items-center gap-3 text-white">
             <Image
               src={siteData.logo}
-              alt={`Logo ${siteData.name}`}
+              alt={`Logo ${siteData.name} à Gland`}
               width={44}
               height={44}
               className="h-11 w-11 rounded-xl border border-white/15 object-cover transition group-hover:border-white/30"

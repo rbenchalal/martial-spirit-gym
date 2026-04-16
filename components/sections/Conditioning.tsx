@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Container from "@/components/ui/Container";
 import SectionTitle from "@/components/ui/SectionTitle";
 import { siteData } from "@/lib/data";
+import Link from "next/link";
 
 type EditableConditioning = {
   title: string;
@@ -54,6 +55,14 @@ export default function Conditioning() {
           title={conditioning.title}
           description={conditioning.description}
         />
+        <div className="mt-5">
+          <Link
+            href="/preparation-physique-gland"
+            className="inline-flex text-sm font-semibold text-red-200 underline decoration-red-500/50 underline-offset-4 transition hover:text-white hover:decoration-red-500"
+          >
+            Préparation physique à Gland
+          </Link>
+        </div>
 
         <div className="mt-10 grid gap-6 lg:grid-cols-2">
           <article className="rounded-2xl border border-white/10 bg-zinc-900 p-6">

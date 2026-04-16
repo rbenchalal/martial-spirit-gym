@@ -140,9 +140,9 @@ export default function Contact() {
 
             <p className="mt-6 text-sm text-zinc-400">Réseaux sociaux</p>
             <div className="mt-2 flex flex-wrap gap-2">
-              {socialLinks.map((social) => (
+              {socialLinks.map((social, index) => (
                 <a
-                  key={social.href}
+                  key={`${social.href}-${index}`}
                   href={social.href}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -167,10 +167,16 @@ export default function Contact() {
 
           <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-zinc-900 to-zinc-800 p-6">
             <p className="text-sm uppercase tracking-[0.16em] text-zinc-400">Localisation</p>
-            <h3 className="mt-4 text-2xl font-semibold text-white">{siteData.name}</h3>
+            <h3 className="mt-4 text-2xl font-semibold text-white">
+              {siteData.name} — Gland
+            </h3>
             <p className="mt-4 leading-7 text-zinc-300">
-              Retrouve-nous à {contact.address}. Contacte-nous pour réserver un cours
-              d'essai en boxe thaïlandaise ou MMA.
+              Martial Spirit Gym vous accueille à Gland, à proximité de Nyon, Vich et de la
+              région de La Côte.
+            </p>
+            <p className="mt-4 leading-7 text-zinc-300">
+              Adresse : {contact.address}. Contactez-nous pour découvrir nos cours de boxe thaï,
+              MMA, boxe anglaise et préparation physique à Gland.
             </p>
 
             <div className="mt-6 overflow-hidden rounded-xl border border-white/10 bg-black/20">

@@ -46,12 +46,31 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const localBusinessJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "SportsActivityLocation",
+    name: "Martial Spirit Gym",
+    url: "https://www.martialspiritgym.ch",
+    description: "Club d'arts martiaux proposant boxe thaï, MMA et boxe anglaise",
+    address: {
+      "@type": "PostalAddress",
+      addressLocality: "Gland",
+      addressRegion: "VD",
+      addressCountry: "CH",
+    },
+    areaServed: ["Gland", "Nyon", "Vich", "La Côte"],
+  } as const;
+
   return (
     <html lang="fr">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         {children}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessJsonLd) }}
+        />
       </body>
     </html>
   );
