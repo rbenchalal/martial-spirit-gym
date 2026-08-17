@@ -1,12 +1,50 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Container from "@/components/ui/Container";
 import InfoBadge from "@/components/ui/InfoBadge";
 import PrimaryButton from "@/components/ui/PrimaryButton";
 import { siteData } from "@/lib/data";
 import Image from "next/image";
 
+type EditableContact = {
+  phone: string;
+  email: string;
+  address: string;
+};
+
+const fallbackContact: EditableContact = {
+  phone: siteData.contact.phone,
+  email: siteData.contact.email,
+  address: siteData.contact.address,
+};
+
 export default function Hero() {
+  const [contact, setContact] = useState<EditableContact>(fallbackContact);
+
+  useEffect(() => {
+    const loadContact = async () => {
+      try {
+        const response = await fetch("/api/admin/contact");
+        const data = (await response.json()) as { contact?: EditableContact | null };
+
+        if (!response.ok || !data.contact) {
+          setContact(fallbackContact);
+          return;
+        }
+
+        setContact({
+          phone: data.contact.phone || fallbackContact.phone,
+          email: data.contact.email || fallbackContact.email,
+          address: data.contact.address || fallbackContact.address,
+        });
+      } catch {
+        setContact(fallbackContact);
+      }
+    };
+
+    void loadContact();
+  }, []);
   return (
     <section id="hero" className="relative overflow-hidden border-b border-white/10 py-24 sm:py-32 lg:py-36">
       <Image
@@ -71,7 +109,11 @@ export default function Hero() {
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-red-200">Martial Spirit Highlights</p>
             <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
               {siteData.hero.highlights.map((item) => (
-                <InfoBadge key={item.label} label={item.label} value={item.value} />
+                <InfoBadge
+                  key={item.label}
+                  label={item.label}
+                  value={item.label === "Lieu" ? contact.address : item.value}
+                />
               ))}
             </div>
           </div>
