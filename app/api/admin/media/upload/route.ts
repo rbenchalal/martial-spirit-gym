@@ -1,8 +1,6 @@
 import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
 import { NextResponse, type NextRequest } from "next/server";
-
-const SESSION_COOKIE_NAME = "admin_session";
-const SESSION_COOKIE_VALUE = "authenticated";
+import { requireAdminSession } from "@/lib/admin-session";
 
 const ALLOWED_CONTENT_TYPES = [
   "image/jpeg",
@@ -32,9 +30,9 @@ function buildAdminMediaPathname(pathname: string) {
 }
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
-  const sessionCookie = request.cookies.get(SESSION_COOKIE_NAME)?.value;
-  if (sessionCookie !== SESSION_COOKIE_VALUE) {
-    return NextResponse.json({ error: "Non autorise." }, { status: 401 });
+  const unauthorized = requireAdminSession(request);
+  if (unauthorized) {
+    return unauthorized;
   }
 
   let body: HandleUploadBody;

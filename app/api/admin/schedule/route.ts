@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { requireAdminSession } from "@/lib/admin-session";
 import {
   readEditableSchedule,
   writeEditableSchedule,
@@ -42,6 +43,11 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const unauthorized = requireAdminSession(request);
+  if (unauthorized) {
+    return unauthorized;
+  }
+
   try {
     const body = (await request.json()) as { schedule?: unknown };
     const nextValue = body?.schedule;

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { requireAdminSession } from "@/lib/admin-session";
 import {
   readEditablePricingText,
   writeEditablePricingText,
@@ -38,6 +39,11 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const unauthorized = requireAdminSession(request);
+  if (unauthorized) {
+    return unauthorized;
+  }
+
   try {
     const body = (await request.json()) as { pricingText?: unknown };
     const nextValue = body?.pricingText;

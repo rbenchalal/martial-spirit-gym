@@ -1,13 +1,14 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-
-const SESSION_COOKIE_NAME = "admin_session";
-const SESSION_COOKIE_VALUE = "authenticated";
+import {
+  ADMIN_SESSION_COOKIE_NAME,
+  verifyAdminSessionToken,
+} from "@/lib/admin-session";
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const sessionCookie = request.cookies.get(SESSION_COOKIE_NAME)?.value;
-  const isAuthenticated = sessionCookie === SESSION_COOKIE_VALUE;
+  const sessionCookie = request.cookies.get(ADMIN_SESSION_COOKIE_NAME)?.value;
+  const isAuthenticated = verifyAdminSessionToken(sessionCookie);
   const isLoginPage = pathname === "/admin/login";
 
   if (!isAuthenticated && !isLoginPage) {

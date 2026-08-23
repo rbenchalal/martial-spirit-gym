@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { requireAdminSession } from "@/lib/admin-session";
 import {
   readEditableHero,
   writeEditableHero,
@@ -27,7 +28,12 @@ function hasRequiredContent(value: EditableHero) {
   return value.title.trim().length > 0 && value.description.trim().length > 0;
 }
 
-export async function GET() {
+export async function GET(request: Request) {
+  const unauthorized = requireAdminSession(request);
+  if (unauthorized) {
+    return unauthorized;
+  }
+
   try {
     const hero = await readEditableHero();
     return NextResponse.json({ hero });
@@ -38,6 +44,11 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const unauthorized = requireAdminSession(request);
+  if (unauthorized) {
+    return unauthorized;
+  }
+
   try {
     const body = (await request.json()) as { hero?: unknown };
     const nextValue = body?.hero;

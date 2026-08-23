@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { requireAdminSession } from "@/lib/admin-session";
 import {
   readEditableSocialLinks,
   writeEditableSocialLinks,
@@ -45,6 +46,11 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const unauthorized = requireAdminSession(request);
+  if (unauthorized) {
+    return unauthorized;
+  }
+
   try {
     const body = (await request.json()) as { socialLinks?: unknown };
     const nextValue = body?.socialLinks;

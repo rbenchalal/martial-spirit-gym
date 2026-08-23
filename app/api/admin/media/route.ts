@@ -1,5 +1,6 @@
 import { del, list } from "@vercel/blob";
 import { NextResponse } from "next/server";
+import { requireAdminSession } from "@/lib/admin-session";
 
 type ErrorBody = { error: string };
 
@@ -14,7 +15,12 @@ function getErrorMessage(error: unknown) {
   return "Erreur inconnue.";
 }
 
-export async function GET() {
+export async function GET(request: Request) {
+  const unauthorized = requireAdminSession(request);
+  if (unauthorized) {
+    return unauthorized;
+  }
+
   try {
     const { blobs: media } = await list({ prefix: "admin-media/" });
 
@@ -28,6 +34,11 @@ export async function GET() {
 }
 
 export async function DELETE(request: Request) {
+  const unauthorized = requireAdminSession(request);
+  if (unauthorized) {
+    return unauthorized;
+  }
+
   try {
     const body = (await request.json()) as { url?: string };
     const url = body?.url;
