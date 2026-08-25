@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "test:catalog": "node --test lib/catalog/validation.test.ts",
-    "test:catalog-store": "node --test lib/catalog/store.test.ts"
+    "test:catalog-store": "node --test lib/catalog/store.test.ts",
+    "test:catalog-admin": "node --test lib/catalog/admin-http.test.ts"
   },
   "dependencies": {
     "@vercel/blob": "^2.3.1",
