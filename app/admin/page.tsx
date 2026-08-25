@@ -1223,6 +1223,15 @@ export default function AdminPage() {
             la video en vedette et le texte des tarifs. Certaines autres sections
             restent en preparation.
           </p>
+          <p className="mt-4">
+            <a
+              href="/admin/catalog"
+              className="inline-flex items-center rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-2 text-sm font-medium text-red-200 transition hover:bg-red-500/20"
+            >
+              Catalogue / nouveau planning
+            </a>
+            <span className="ml-3 text-sm text-zinc-400">en préparation</span>
+          </p>
         </header>
 
         <div className="space-y-6">
