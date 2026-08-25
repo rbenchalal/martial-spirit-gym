@@ -1,7 +1,10 @@
 /**
- * Structural types for the administrable catalogue and schedule.
+ * Structural types for the administrable catalogue and a single schedule.
  * Identifiers are open strings: real activities, programmes and coaches
  * are data, not closed TypeScript unions.
+ *
+ * Session kinds (collective, private, open mat, open day, …) are not
+ * modelled as separate types: they live only in each slot's free-text label.
  */
 
 /** Civil date in Europe/Zurich, not a UTC instant. Format: YYYY-MM-DD. */
@@ -17,10 +20,7 @@ export type ProgramId = string;
 export type SegmentId = string;
 export type CoachId = string;
 export type CategoryId = string;
-export type OfferingId = string;
-export type VersionId = string;
 export type SlotId = string;
-export type ExceptionId = string;
 
 export type Weekday =
   | "monday"
@@ -39,14 +39,15 @@ export type RecurrenceRule =
       nth: 1 | 2 | 3 | 4 | 5 | "last";
     };
 
-/** Lifecycle of catalogue entities (activities, programmes, offerings, …). */
+/** Lifecycle of catalogue entities (activities, programmes, coaches, …). */
 export type CatalogEntityStatus = "draft" | "published" | "suspended" | "archived";
 
-export type ScheduleVersionStatus = "draft" | "scheduled" | "active" | "archived";
-
-export type ScheduleSlotStatus = "draft" | "published" | "suspended";
-
-export type EnrollmentMode = "registration_required" | "on_request" | "drop_in";
+/**
+ * Slot visibility on the public site.
+ * draft = hidden; published = visible.
+ * There is no suspended slot status; unpublish by setting draft.
+ */
+export type ScheduleSlotStatus = "draft" | "published";
 
 export type ActivityCategory = {
   id: CategoryId;
@@ -64,13 +65,11 @@ export type Activity = {
   categoryId: CategoryId;
   status: CatalogEntityStatus;
   description?: string;
-  /** Inherited by schedule slots for this activity. */
-  planningColor?: string;
   /**
-   * Eligibility for the open-mat activity picker.
-   * Runtime relation for a given open mat lives on OpenMatOffering.activityIds.
+   * Default colour suggested when creating a slot for this activity.
+   * The colour actually shown on the schedule is ScheduleSlot.color.
    */
-  openMatEligible?: boolean;
+  planningColor?: string;
   /**
    * Public path if a page exists later.
    * Creating an activity does not publish a SEO page.
@@ -110,7 +109,7 @@ export type Program = AgeBandProgram | FamilyProgram;
 
 /**
  * Audience restriction or variant (e.g. women-only), not an age programme.
- * Optional on offerings; do not invent a mandatory "mixed" segment.
+ * Optional on slots; do not invent a mandatory "mixed" segment.
  */
 export type AudienceSegment = {
   id: SegmentId;
@@ -128,125 +127,39 @@ export type Coach = {
   activityIds?: ActivityId[];
 };
 
-type OfferingBase = {
-  id: OfferingId;
-  name: string;
-  status: CatalogEntityStatus;
-  defaultDurationMinutes?: number;
-  defaultCapacity?: number;
-  enrollmentMode?: EnrollmentMode;
-  segmentIds?: SegmentId[];
-  /** Form default only; the slot coach is the source of truth. */
-  defaultCoachId?: CoachId;
-  allowedCoachIds?: CoachId[];
-};
-
-/** Collective class: one activity, at least one programme. */
-export type ClassOffering = OfferingBase & {
-  kind: "class";
-  activityId: ActivityId;
-  programIds: [ProgramId, ...ProgramId[]];
-};
-
-/** Private lesson: one activity; no recurring slot required. */
-export type PrivateOffering = OfferingBase & {
-  kind: "private";
-  activityId: ActivityId;
-  programIds?: ProgramId[];
-};
-
 /**
- * Open mat is a session kind, not a hub activity.
- * Compatible activities and allowed programmes are listed here.
+ * Universal schedule slot for the single live planning document.
+ * No version history, no offerings, no automatic date-based activation:
+ * publication of the public schedule is manual via status.
  */
-export type OpenMatOffering = OfferingBase & {
-  kind: "open_mat";
-  activityIds: [ActivityId, ...ActivityId[]];
-  programIds: [ProgramId, ...ProgramId[]];
-};
-
-/** Club-wide event (e.g. monthly open day). Activities and programmes optional. */
-export type ClubEventOffering = OfferingBase & {
-  kind: "club_event";
-  activityIds?: ActivityId[];
-  programIds?: ProgramId[];
-  openToNonMembers?: boolean;
-  planningColorOverride?: string;
-};
-
-/**
- * Discriminated by `kind`, which is the only session-type source.
- * No duplicated sessionType or format fields.
- */
-export type CourseOffering =
-  | ClassOffering
-  | PrivateOffering
-  | OpenMatOffering
-  | ClubEventOffering;
-
-export type ScheduleVersion = {
-  id: VersionId;
-  name: string;
-  status: ScheduleVersionStatus;
-  /** Required when status is scheduled or active. */
-  effectiveFrom: IsoDate | null;
-  /** Exclusive end; null means open-ended. */
-  effectiveTo: IsoDate | null;
-  duplicatedFromId?: VersionId;
-};
-
 export type ScheduleSlot = {
   id: SlotId;
-  versionId: VersionId;
-  offeringId: OfferingId;
   /**
-   * Coach for recurring occurrences of this slot.
-   * Not derived from the offering; a one-off change uses ScheduleException.
+   * Text shown on the schedule, e.g. "Cours collectif Boxe anglaise"
+   * or "Open mat". Session kind is conveyed only by this label.
    */
+  label: string;
+  /** Optional link to a catalogue activity/discipline. */
+  activityId?: ActivityId;
+  /** Optional programmes / age bands associated with this slot. */
+  programIds?: ProgramId[];
+  /** Optional audience segments associated with this slot. */
+  segmentIds?: SegmentId[];
   coachId: CoachId;
   recurrence: RecurrenceRule;
   startTime: ClockTime;
   endTime: ClockTime;
+  /** Colour actually used when rendering this slot. */
+  color: string;
   status: ScheduleSlotStatus;
   capacity?: number;
   publicNote?: string;
-  /**
-   * Recurring replacement: when this slot occurs, hide the target slot
-   * on the same civil date (e.g. monthly open day vs weekly open mat).
-   */
-  replacesSlotId?: SlotId;
 };
 
 /**
- * One-off cancellation or replacement for a single civil date.
- * Slot status "suspended" affects every occurrence, not a single date.
+ * Single administrable catalogue + schedule document.
+ * One live set of slots; no schedule version history in this schema.
  */
-type ScheduleExceptionBase = {
-  id: ExceptionId;
-  slotId: SlotId;
-  date: IsoDate;
-  publicNote?: string;
-};
-
-export type CancelledScheduleException = ScheduleExceptionBase & {
-  action: "cancelled";
-  replacement?: never;
-};
-
-export type ReplacedScheduleException = ScheduleExceptionBase & {
-  action: "replaced";
-  replacement: {
-    startTime: ClockTime;
-    endTime: ClockTime;
-    coachId?: CoachId;
-    offeringId?: OfferingId;
-  };
-};
-
-export type ScheduleException =
-  | CancelledScheduleException
-  | ReplacedScheduleException;
-
 export type CatalogDocument = {
   schemaVersion: 1;
   /** Monotonic counter for optimistic concurrency on KV writes. */
@@ -259,15 +172,12 @@ export type CatalogDocument = {
   programs: Program[];
   segments: AudienceSegment[];
   coaches: Coach[];
-  offerings: CourseOffering[];
-  versions: ScheduleVersion[];
   slots: ScheduleSlot[];
-  exceptions: ScheduleException[];
 };
 
 /**
  * Shape of the current textual schedule (admin:schedule).
- * Do not parse this into the structured October 2026 grid.
+ * Do not parse this into the structured catalogue schedule.
  */
 export type LegacyScheduleSession = {
   title: string;
