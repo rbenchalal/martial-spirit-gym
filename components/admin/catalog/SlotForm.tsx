@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type {
+  Activity,
   Coach,
   RecurrenceRule,
   ScheduleSlot,
@@ -12,6 +13,7 @@ import type { SlotFormFields } from "@/lib/catalog/admin-model";
 
 type SlotFormProps = {
   coaches: Coach[];
+  activities: Activity[];
   initialSlot?: ScheduleSlot | null;
   submitLabel: string;
   onSubmit: (fields: SlotFormFields) => void;
@@ -78,6 +80,7 @@ function fieldsFromSlot(slot: ScheduleSlot): {
   status: ScheduleSlotStatus;
   capacity: string;
   publicNote: string;
+  activityId: string;
 } {
   const recurrenceKind =
     slot.recurrence.kind === "monthly_nth_weekday"
@@ -102,17 +105,20 @@ function fieldsFromSlot(slot: ScheduleSlot): {
     status: slot.status,
     capacity: slot.capacity === undefined ? "" : String(slot.capacity),
     publicNote: slot.publicNote ?? "",
+    activityId: slot.activityId ?? "",
   };
 }
 
 export default function SlotForm({
   coaches,
+  activities,
   initialSlot = null,
   submitLabel,
   onSubmit,
   onCancel,
 }: SlotFormProps) {
   const initial = initialSlot ? fieldsFromSlot(initialSlot) : null;
+  const isEditing = Boolean(initialSlot);
   const [label, setLabel] = useState(initial?.label ?? "");
   const [recurrenceKind, setRecurrenceKind] = useState<
     "weekly" | "monthly_nth_weekday"
@@ -132,7 +138,19 @@ export default function SlotForm({
   );
   const [capacity, setCapacity] = useState(initial?.capacity ?? "");
   const [publicNote, setPublicNote] = useState(initial?.publicNote ?? "");
+  const [activityId, setActivityId] = useState(initial?.activityId ?? "");
   const [errors, setErrors] = useState<string[]>([]);
+
+  const handleActivityChange = (nextActivityId: string) => {
+    setActivityId(nextActivityId);
+    if (isEditing || !nextActivityId) {
+      return;
+    }
+    const activity = activities.find((item) => item.id === nextActivityId);
+    if (activity?.planningColor) {
+      setColor(activity.planningColor.toUpperCase());
+    }
+  };
 
   const validate = (): SlotFormFields | null => {
     const nextErrors: string[] = [];
@@ -142,6 +160,12 @@ export default function SlotForm({
     }
     if (!coachId || !coaches.some((coach) => coach.id === coachId)) {
       nextErrors.push("Selectionnez un coach existant.");
+    }
+    if (
+      activityId &&
+      !activities.some((activity) => activity.id === activityId)
+    ) {
+      nextErrors.push("Selectionnez une discipline existante.");
     }
     if (!weekday) {
       nextErrors.push("Selectionnez un jour.");
@@ -185,6 +209,9 @@ export default function SlotForm({
     if (publicNote.trim() !== "") {
       fields.publicNote = publicNote.trim();
     }
+    if (activityId) {
+      fields.activityId = activityId;
+    }
     setErrors([]);
     return fields;
   };
@@ -208,6 +235,7 @@ export default function SlotForm({
       setStatus("published");
       setCapacity("");
       setPublicNote("");
+      setActivityId("");
     }
   };
 
@@ -347,6 +375,23 @@ export default function SlotForm({
           Options
         </summary>
         <div className="mt-4 space-y-4">
+          <label className="block">
+            <span className="mb-2 block text-sm font-medium text-zinc-200">
+              Discipline
+            </span>
+            <select
+              value={activityId}
+              onChange={(event) => handleActivityChange(event.target.value)}
+              className={fieldClassName}
+            >
+              <option value="">Aucune discipline</option>
+              {activities.map((activity) => (
+                <option key={activity.id} value={activity.id}>
+                  {activity.name}
+                </option>
+              ))}
+            </select>
+          </label>
           <label className="block">
             <span className="mb-2 block text-sm font-medium text-zinc-200">
               Statut
