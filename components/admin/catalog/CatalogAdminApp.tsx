@@ -10,8 +10,11 @@ import {
   createCatalogSavePayload,
   createLoadedCatalogAdminState,
   createNewCatalogAdminState,
+  replaceLocalCatalog,
   type CatalogAdminState,
 } from "@/lib/catalog/admin-model";
+import CoachesPanel from "@/components/admin/catalog/CoachesPanel";
+import SlotsPanel from "@/components/admin/catalog/SlotsPanel";
 
 type LoadStatus = "loading" | "ready" | "blocking" | "retryable";
 
@@ -245,6 +248,17 @@ export default function CatalogAdminApp() {
     }
   };
 
+  const handleLocalCatalogChange = (catalog: CatalogDocument) => {
+    if (!state) {
+      return;
+    }
+    setStatusMessage(null);
+    setErrorMessage(null);
+    setConflictActive(false);
+    setValidationErrors(null);
+    setState(replaceLocalCatalog(state, catalog));
+  };
+
   const saveDisabled =
     loadStatus !== "ready" ||
     state === null ||
@@ -375,12 +389,22 @@ export default function CatalogAdminApp() {
               </dl>
             </section>
 
+            <CoachesPanel
+              catalog={state.catalog}
+              onCatalogChange={handleLocalCatalogChange}
+            />
+
+            <SlotsPanel
+              catalog={state.catalog}
+              onCatalogChange={handleLocalCatalogChange}
+            />
+
             <section className="rounded-2xl border border-white/10 bg-zinc-950/70 p-6">
-              <h2 className="text-xl font-semibold">Edition</h2>
+              <h2 className="text-xl font-semibold">Enregistrement</h2>
               <p className="mt-2 text-sm text-zinc-300">
-                Les editeurs de coachs, creneaux et referentiels arriveront dans
-                les prochaines etapes. Aucune modification locale n&apos;est
-                encore possible ici.
+                Les disciplines, programmes et segments seront disponibles dans
+                une prochaine etape. Utilisez le bouton global pour enregistrer
+                coachs et creneaux.
               </p>
 
               {statusMessage ? (

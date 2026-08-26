@@ -1,16 +1,29 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import type { CatalogDocument } from "./types.ts";
+import type { CatalogDocument, ScheduleSlot } from "./types.ts";
 import {
+  addCoach,
+  addSlot,
   applySavedCatalog,
+  countSlotsForCoach,
   createCatalogSavePayload,
+  createCoachId,
   createEmptyCatalog,
   createLoadedCatalogAdminState,
   createNewCatalogAdminState,
+  createSlotId,
+  listSlotsSorted,
+  removeCoach,
+  removeSlot,
+  renameCoach,
   replaceLocalCatalog,
+  updateSlot,
+  type SlotFormFields,
 } from "./admin-model.ts";
 
 const FIXED_NOW = () => new Date("2026-09-15T10:30:00.000Z");
+const FIXED_UUID = () => "11111111-1111-1111-1111-111111111111";
+const FIXED_UUID_2 = () => "22222222-2222-2222-2222-222222222222";
 
 function sampleStoredCatalog(): CatalogDocument {
   return {
@@ -30,6 +43,21 @@ function sampleStoredCatalog(): CatalogDocument {
       },
     ],
     slots: [],
+  };
+}
+
+function baseSlotFields(
+  overrides: Partial<SlotFormFields> = {},
+): SlotFormFields {
+  return {
+    label: "Collective boxing",
+    coachId: "coach_1",
+    recurrence: { kind: "weekly", weekday: "monday" },
+    startTime: "18:00",
+    endTime: "19:00",
+    color: "#DC2626",
+    status: "published",
+    ...overrides,
   };
 }
 
@@ -175,4 +203,394 @@ test("does not mutate received objects", () => {
     status: "draft",
   });
   assert.equal(stored.coaches.length, 1);
+});
+
+test("creates a coach deterministically", () => {
+  const catalog = createEmptyCatalog(FIXED_NOW);
+  const result = addCoach(catalog, "Alex", FIXED_UUID);
+  assert.equal(result.ok, true);
+  if (result.ok) {
+    assert.equal(result.coach?.id, "coach_11111111-1111-1111-1111-111111111111");
+    assert.equal(result.coach?.publicName, "Alex");
+  }
+});
+
+test("coach ids use the coach_ prefix", () => {
+  assert.equal(createCoachId(FIXED_UUID).startsWith("coach_"), true);
+  assert.equal(
+    createCoachId(FIXED_UUID),
+    "coach_11111111-1111-1111-1111-111111111111",
+  );
+});
+
+test("trims coach public names", () => {
+  const result = addCoach(createEmptyCatalog(FIXED_NOW), "  Pat  ", FIXED_UUID);
+  assert.equal(result.ok, true);
+  if (result.ok) {
+    assert.equal(result.coach?.publicName, "Pat");
+  }
+});
+
+test("new coaches default to published status", () => {
+  const result = addCoach(createEmptyCatalog(FIXED_NOW), "Sam", FIXED_UUID);
+  assert.equal(result.ok, true);
+  if (result.ok) {
+    assert.equal(result.coach?.status, "published");
+    assert.equal("bio" in (result.coach ?? {}), false);
+    assert.equal("activityIds" in (result.coach ?? {}), false);
+  }
+});
+
+test("adding a coach is immutable", () => {
+  const catalog = createEmptyCatalog(FIXED_NOW);
+  const snapshot = structuredClone(catalog);
+  const result = addCoach(catalog, "Alex", FIXED_UUID);
+  assert.equal(result.ok, true);
+  assert.deepEqual(catalog, snapshot);
+  if (result.ok) {
+    assert.equal(result.catalog.coaches.length, 1);
+    assert.equal(catalog.coaches.length, 0);
+  }
+});
+
+test("renaming a coach keeps its id", () => {
+  const base = sampleStoredCatalog();
+  const result = renameCoach(base, "coach_1", "Coach Renamed");
+  assert.equal(result.ok, true);
+  if (result.ok) {
+    assert.equal(result.catalog.coaches[0]?.id, "coach_1");
+    assert.equal(result.catalog.coaches[0]?.publicName, "Coach Renamed");
+  }
+});
+
+test("removes an unused coach", () => {
+  const result = removeCoach(sampleStoredCatalog(), "coach_1");
+  assert.equal(result.ok, true);
+  if (result.ok) {
+    assert.deepEqual(result.catalog.coaches, []);
+  }
+});
+
+test("refuses to remove a referenced coach", () => {
+  const catalog = sampleStoredCatalog();
+  const withSlot = addSlot(catalog, baseSlotFields(), FIXED_UUID);
+  assert.equal(withSlot.ok, true);
+  if (!withSlot.ok) {
+    return;
+  }
+  const result = removeCoach(withSlot.catalog, "coach_1");
+  assert.equal(result.ok, false);
+  if (!result.ok) {
+    assert.equal(result.code, "coach_in_use");
+  }
+  assert.equal(withSlot.catalog.coaches.length, 1);
+  assert.equal(withSlot.catalog.slots.length, 1);
+});
+
+test("removing a coach never cascades to slots", () => {
+  const catalog = sampleStoredCatalog();
+  const withSlot = addSlot(catalog, baseSlotFields(), FIXED_UUID);
+  assert.equal(withSlot.ok, true);
+  if (!withSlot.ok) {
+    return;
+  }
+  const refused = removeCoach(withSlot.catalog, "coach_1");
+  assert.equal(refused.ok, false);
+  assert.equal(withSlot.catalog.slots.length, 1);
+});
+
+test("counts slots for a coach", () => {
+  const catalog = sampleStoredCatalog();
+  const first = addSlot(catalog, baseSlotFields({ label: "A" }), FIXED_UUID);
+  assert.equal(first.ok, true);
+  if (!first.ok) {
+    return;
+  }
+  const second = addSlot(
+    first.catalog,
+    baseSlotFields({ label: "B" }),
+    FIXED_UUID_2,
+  );
+  assert.equal(second.ok, true);
+  if (!second.ok) {
+    return;
+  }
+  assert.equal(countSlotsForCoach(second.catalog, "coach_1"), 2);
+  assert.equal(countSlotsForCoach(second.catalog, "missing"), 0);
+});
+
+test("creates a slot deterministically", () => {
+  const result = addSlot(
+    sampleStoredCatalog(),
+    baseSlotFields({ status: "published" }),
+    FIXED_UUID,
+  );
+  assert.equal(result.ok, true);
+  if (result.ok) {
+    assert.equal(result.slot?.id, "slot_11111111-1111-1111-1111-111111111111");
+    assert.equal(result.slot?.label, "Collective boxing");
+  }
+});
+
+test("slot ids use the slot_ prefix", () => {
+  assert.equal(createSlotId(FIXED_UUID).startsWith("slot_"), true);
+  assert.equal(
+    createSlotId(FIXED_UUID),
+    "slot_11111111-1111-1111-1111-111111111111",
+  );
+});
+
+test("adding a slot is immutable", () => {
+  const catalog = sampleStoredCatalog();
+  const snapshot = structuredClone(catalog);
+  const result = addSlot(catalog, baseSlotFields(), FIXED_UUID);
+  assert.equal(result.ok, true);
+  assert.deepEqual(catalog, snapshot);
+  if (result.ok) {
+    assert.equal(result.catalog.slots.length, 1);
+  }
+});
+
+test("new slots keep the published status provided by the form", () => {
+  const result = addSlot(
+    sampleStoredCatalog(),
+    baseSlotFields({ status: "published" }),
+    FIXED_UUID,
+  );
+  assert.equal(result.ok, true);
+  if (result.ok) {
+    assert.equal(result.slot?.status, "published");
+    assert.equal("activityId" in (result.slot ?? {}), false);
+    assert.equal("programIds" in (result.slot ?? {}), false);
+    assert.equal("segmentIds" in (result.slot ?? {}), false);
+  }
+});
+
+test("updates an existing slot", () => {
+  const created = addSlot(sampleStoredCatalog(), baseSlotFields(), FIXED_UUID);
+  assert.equal(created.ok, true);
+  if (!created.ok || !created.slot) {
+    return;
+  }
+  const updated = updateSlot(created.catalog, created.slot.id, {
+    ...baseSlotFields(),
+    label: "Updated label",
+    startTime: "19:00",
+    endTime: "20:00",
+  });
+  assert.equal(updated.ok, true);
+  if (updated.ok) {
+    assert.equal(updated.slot?.label, "Updated label");
+    assert.equal(updated.slot?.startTime, "19:00");
+    assert.equal(updated.catalog.slots.length, 1);
+  }
+});
+
+test("preserves M4C associations while updating a slot", () => {
+  const catalog = sampleStoredCatalog();
+  const existing: ScheduleSlot = {
+    id: "slot_keep",
+    label: "Existing",
+    activityId: "act_1",
+    programIds: ["prog_1"],
+    segmentIds: ["seg_1"],
+    coachId: "coach_1",
+    recurrence: { kind: "weekly", weekday: "friday" },
+    startTime: "10:00",
+    endTime: "11:00",
+    color: "#112233",
+    status: "draft",
+  };
+  catalog.slots = [existing];
+
+  const updated = updateSlot(catalog, "slot_keep", {
+    label: "Renamed",
+    coachId: "coach_1",
+    recurrence: { kind: "weekly", weekday: "friday" },
+    startTime: "10:30",
+    endTime: "11:30",
+    color: "#ABCDEF",
+    status: "published",
+  });
+
+  assert.equal(updated.ok, true);
+  if (updated.ok && updated.slot) {
+    assert.equal(updated.slot.activityId, "act_1");
+    assert.deepEqual(updated.slot.programIds, ["prog_1"]);
+    assert.deepEqual(updated.slot.segmentIds, ["seg_1"]);
+    assert.equal(updated.slot.label, "Renamed");
+    assert.equal(updated.slot.status, "published");
+  }
+});
+
+test("removes a slot", () => {
+  const created = addSlot(sampleStoredCatalog(), baseSlotFields(), FIXED_UUID);
+  assert.equal(created.ok, true);
+  if (!created.ok || !created.slot) {
+    return;
+  }
+  const removed = removeSlot(created.catalog, created.slot.id);
+  assert.equal(removed.ok, true);
+  if (removed.ok) {
+    assert.deepEqual(removed.catalog.slots, []);
+    assert.equal(removed.catalog.coaches.length, 1);
+  }
+});
+
+test("sorts slots monday to sunday", () => {
+  const catalog = sampleStoredCatalog();
+  const sunday = addSlot(
+    catalog,
+    baseSlotFields({
+      label: "Sunday",
+      recurrence: { kind: "weekly", weekday: "sunday" },
+    }),
+    () => "sun",
+  );
+  assert.equal(sunday.ok, true);
+  if (!sunday.ok) return;
+
+  const monday = addSlot(
+    sunday.catalog,
+    baseSlotFields({
+      label: "Monday",
+      recurrence: { kind: "weekly", weekday: "monday" },
+    }),
+    () => "mon",
+  );
+  assert.equal(monday.ok, true);
+  if (!monday.ok) return;
+
+  const sorted = listSlotsSorted(monday.catalog);
+  assert.deepEqual(
+    sorted.map((slot) => slot.recurrence.weekday),
+    ["monday", "sunday"],
+  );
+});
+
+test("sorts slots by start time within the same day", () => {
+  const catalog = sampleStoredCatalog();
+  const late = addSlot(
+    catalog,
+    baseSlotFields({ label: "Late", startTime: "20:00", endTime: "21:00" }),
+    () => "late",
+  );
+  assert.equal(late.ok, true);
+  if (!late.ok) return;
+  const early = addSlot(
+    late.catalog,
+    baseSlotFields({ label: "Early", startTime: "09:00", endTime: "10:00" }),
+    () => "early",
+  );
+  assert.equal(early.ok, true);
+  if (!early.ok) return;
+
+  const sorted = listSlotsSorted(early.catalog);
+  assert.deepEqual(
+    sorted.map((slot) => slot.startTime),
+    ["09:00", "20:00"],
+  );
+});
+
+test("sorts slots by label as tertiary key", () => {
+  const catalog = sampleStoredCatalog();
+  const beta = addSlot(
+    catalog,
+    baseSlotFields({ label: "Beta" }),
+    () => "beta",
+  );
+  assert.equal(beta.ok, true);
+  if (!beta.ok) return;
+  const alpha = addSlot(
+    beta.catalog,
+    baseSlotFields({ label: "Alpha" }),
+    () => "alpha",
+  );
+  assert.equal(alpha.ok, true);
+  if (!alpha.ok) return;
+
+  const sorted = listSlotsSorted(alpha.catalog);
+  assert.deepEqual(
+    sorted.map((slot) => slot.label),
+    ["Alpha", "Beta"],
+  );
+});
+
+test("coach and slot mutations leave other collections untouched", () => {
+  const catalog: CatalogDocument = {
+    ...sampleStoredCatalog(),
+    categories: [
+      {
+        id: "cat_1",
+        name: "Combat",
+        slug: "combat",
+        sortOrder: 0,
+        status: "published",
+      },
+    ],
+    activities: [
+      {
+        id: "act_1",
+        name: "Boxing",
+        shortName: "Boxe",
+        slug: "boxing",
+        categoryId: "cat_1",
+        status: "published",
+      },
+    ],
+    programs: [
+      {
+        kind: "age_band",
+        id: "prog_1",
+        name: "Adults",
+        slug: "adults",
+        status: "published",
+        ageMin: 18,
+        ageMax: null,
+      },
+    ],
+    segments: [
+      {
+        id: "seg_1",
+        label: "Women",
+        status: "published",
+        programIds: ["prog_1"],
+      },
+    ],
+  };
+
+  const withCoach = addCoach(catalog, "New Coach", FIXED_UUID);
+  assert.equal(withCoach.ok, true);
+  if (!withCoach.ok) return;
+  const withSlot = addSlot(
+    withCoach.catalog,
+    baseSlotFields({ coachId: "coach_1" }),
+    FIXED_UUID_2,
+  );
+  assert.equal(withSlot.ok, true);
+  if (!withSlot.ok) return;
+
+  assert.deepEqual(withSlot.catalog.categories, catalog.categories);
+  assert.deepEqual(withSlot.catalog.activities, catalog.activities);
+  assert.deepEqual(withSlot.catalog.programs, catalog.programs);
+  assert.deepEqual(withSlot.catalog.segments, catalog.segments);
+});
+
+test("coach and slot helpers do not mutate received objects", () => {
+  const catalog = sampleStoredCatalog();
+  const snapshot = structuredClone(catalog);
+  const withCoach = addCoach(catalog, "Extra", FIXED_UUID);
+  assert.equal(withCoach.ok, true);
+  if (!withCoach.ok) return;
+  const withSlot = addSlot(withCoach.catalog, baseSlotFields(), FIXED_UUID_2);
+  assert.equal(withSlot.ok, true);
+  if (!withSlot.ok || !withSlot.slot) return;
+  updateSlot(withSlot.catalog, withSlot.slot.id, {
+    ...baseSlotFields(),
+    label: "Changed",
+  });
+  removeSlot(withSlot.catalog, withSlot.slot.id);
+  renameCoach(catalog, "coach_1", "Other");
+  removeCoach(catalog, "coach_1");
+  assert.deepEqual(catalog, snapshot);
 });
