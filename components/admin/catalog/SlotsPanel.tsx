@@ -4,7 +4,6 @@ import { useMemo, useState } from "react";
 import type { CatalogDocument, ScheduleSlot, Weekday } from "@/lib/catalog/types";
 import {
   addSlot,
-  listActivitiesSorted,
   listSlotsSorted,
   removeSlot,
   updateSlot,
@@ -67,19 +66,6 @@ export default function SlotsPanel({
     }
     return map;
   }, [catalog.coaches]);
-
-  const activities = useMemo(
-    () => listActivitiesSorted(catalog),
-    [catalog],
-  );
-
-  const activityNameById = useMemo(() => {
-    const map = new Map<string, string>();
-    for (const activity of catalog.activities) {
-      map.set(activity.id, activity.name);
-    }
-    return map;
-  }, [catalog.activities]);
 
   const editingSlot =
     editingSlotId === null
@@ -150,7 +136,6 @@ export default function SlotsPanel({
             <SlotForm
               key={editingSlot?.id ?? "new-slot"}
               coaches={catalog.coaches}
-              activities={activities}
               initialSlot={editingSlot}
               submitLabel={
                 editingSlot ? "Enregistrer le creneau" : "Ajouter le creneau"
@@ -206,13 +191,6 @@ export default function SlotsPanel({
                   <p className="mt-1 text-sm text-zinc-400">
                     Coach : {coachNameById.get(slot.coachId) ?? "Coach inconnu"}
                   </p>
-                  {slot.activityId ? (
-                    <p className="mt-1 text-sm text-zinc-400">
-                      Discipline :{" "}
-                      {activityNameById.get(slot.activityId) ??
-                        "Discipline inconnue"}
-                    </p>
-                  ) : null}
                   {slot.capacity !== undefined ? (
                     <p className="mt-1 text-sm text-zinc-400">
                       Capacite : {slot.capacity}

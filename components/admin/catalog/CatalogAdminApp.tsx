@@ -14,7 +14,6 @@ import {
   type CatalogAdminState,
 } from "@/lib/catalog/admin-model";
 import CoachesPanel from "@/components/admin/catalog/CoachesPanel";
-import ReferencePanel from "@/components/admin/catalog/ReferencePanel";
 import SlotsPanel from "@/components/admin/catalog/SlotsPanel";
 
 type LoadStatus = "loading" | "ready" | "blocking" | "retryable";
@@ -400,17 +399,12 @@ export default function CatalogAdminApp() {
               onCatalogChange={handleLocalCatalogChange}
             />
 
-            <ReferencePanel
-              catalog={state.catalog}
-              onCatalogChange={handleLocalCatalogChange}
-            />
-
             <section className="rounded-2xl border border-white/10 bg-zinc-950/70 p-6">
               <h2 className="text-xl font-semibold">Enregistrement</h2>
               <p className="mt-2 text-sm text-zinc-300">
-                Utilisez le bouton global pour enregistrer coachs, creneaux et
-                referentiel. Les programmes et segments arriveront dans une
-                prochaine etape.
+                Les disciplines, programmes et segments seront disponibles dans
+                une prochaine etape. Utilisez le bouton global pour enregistrer
+                coachs et creneaux.
               </p>
 
               {statusMessage ? (
