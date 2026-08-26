@@ -252,5 +252,6 @@ export const siteData = {
     { label: "Tarifs", href: "#tarifs" },
     { label: "FAQ", href: "#faq" },
     { label: "Contact", href: "#contact" },
+    { label: "Sponsoring", href: "/sponsoring" },
   ],
 } as const;
