@@ -1,11 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import Container from "@/components/ui/Container";
 import PrimaryButton from "@/components/ui/PrimaryButton";
 import WhatsAppButton from "@/components/ui/WhatsAppButton";
 import { siteData } from "@/lib/data";
+
+const SPONSORING_PAGE_PUBLISHED = false;
 
 const PDF_HREF = "/documents/dossier-sponsoring-martial-spirit-gym.pdf";
 const PDF_META = "PDF, 7 pages, environ 2,5 Mo";
@@ -118,6 +121,10 @@ const pdfLinkClassName =
   "inline-flex items-center justify-center rounded-full border border-white/20 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/10 sm:text-base";
 
 export default function SponsoringPage() {
+  if (!SPONSORING_PAGE_PUBLISHED) {
+    notFound();
+  }
+
   return (
     <div className="min-h-screen bg-black text-white">
       <Navbar />
