@@ -367,3 +367,65 @@ export function listSlotsSorted(catalog: CatalogDocument): ScheduleSlot[] {
     return left.label.localeCompare(right.label, "fr");
   });
 }
+
+export type PublicScheduleActivationSummary = {
+  publishedSlotCount: number;
+  weeklySlotCount: number;
+  monthlySlotCount: number;
+  weeklyDays: Weekday[];
+};
+
+const WEEKDAYS_MONDAY_FIRST: Weekday[] = [
+  "monday",
+  "tuesday",
+  "wednesday",
+  "thursday",
+  "friday",
+  "saturday",
+  "sunday",
+];
+
+/**
+ * Summarizes published slots for the admin activation control.
+ * Coach status is ignored; only slot status and recurrence matter.
+ */
+export function summarizePublicScheduleActivation(
+  catalog: CatalogDocument,
+): PublicScheduleActivationSummary {
+  let publishedSlotCount = 0;
+  let weeklySlotCount = 0;
+  let monthlySlotCount = 0;
+  const coveredDays = new Set<Weekday>();
+
+  for (const slot of catalog.slots) {
+    if (slot.status !== "published") {
+      continue;
+    }
+
+    publishedSlotCount += 1;
+
+    if (slot.recurrence.kind === "weekly") {
+      weeklySlotCount += 1;
+      coveredDays.add(slot.recurrence.weekday);
+    } else if (slot.recurrence.kind === "monthly_nth_weekday") {
+      monthlySlotCount += 1;
+    }
+  }
+
+  return {
+    publishedSlotCount,
+    weeklySlotCount,
+    monthlySlotCount,
+    weeklyDays: WEEKDAYS_MONDAY_FIRST.filter((day) => coveredDays.has(day)),
+  };
+}
+
+/**
+ * True only when enabling public schedule (transition to true from absent or false).
+ */
+export function requiresPublicScheduleActivationConfirmation(
+  currentValue: boolean | undefined,
+  nextValue: boolean,
+): boolean {
+  return currentValue !== true && nextValue === true;
+}

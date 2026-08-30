@@ -17,6 +17,8 @@ import {
   removeSlot,
   renameCoach,
   replaceLocalCatalog,
+  requiresPublicScheduleActivationConfirmation,
+  summarizePublicScheduleActivation,
   updateSlot,
   type SlotFormFields,
 } from "./admin-model.ts";
@@ -675,4 +677,279 @@ test("coach and slot mutations preserve absent publicScheduleEnabled", () => {
   assert.equal(withSlot.ok, true);
   if (!withSlot.ok) return;
   assert.equal("publicScheduleEnabled" in withSlot.catalog, false);
+});
+
+function slot(
+  id: string,
+  overrides: Partial<ScheduleSlot> = {},
+): ScheduleSlot {
+  return {
+    id,
+    label: id,
+    coachId: "coach_1",
+    recurrence: { kind: "weekly", weekday: "monday" },
+    startTime: "18:00",
+    endTime: "19:00",
+    color: "#DC2626",
+    status: "published",
+    ...overrides,
+  };
+}
+
+test("summarize empty catalog yields zero published slots", () => {
+  const summary = summarizePublicScheduleActivation(createEmptyCatalog(FIXED_NOW));
+  assert.equal(summary.publishedSlotCount, 0);
+  assert.equal(summary.weeklySlotCount, 0);
+  assert.equal(summary.monthlySlotCount, 0);
+  assert.deepEqual(summary.weeklyDays, []);
+});
+
+test("summarize excludes draft slots", () => {
+  const catalog: CatalogDocument = {
+    ...sampleStoredCatalog(),
+    slots: [slot("slot_draft", { status: "draft" })],
+  };
+  const summary = summarizePublicScheduleActivation(catalog);
+  assert.equal(summary.publishedSlotCount, 0);
+  assert.equal(summary.weeklySlotCount, 0);
+  assert.deepEqual(summary.weeklyDays, []);
+});
+
+test("summarize counts a published slot", () => {
+  const catalog: CatalogDocument = {
+    ...sampleStoredCatalog(),
+    slots: [slot("slot_pub")],
+  };
+  const summary = summarizePublicScheduleActivation(catalog);
+  assert.equal(summary.publishedSlotCount, 1);
+});
+
+test("summarize counts a weekly published slot", () => {
+  const catalog: CatalogDocument = {
+    ...sampleStoredCatalog(),
+    slots: [
+      slot("slot_weekly", {
+        recurrence: { kind: "weekly", weekday: "wednesday" },
+      }),
+    ],
+  };
+  const summary = summarizePublicScheduleActivation(catalog);
+  assert.equal(summary.weeklySlotCount, 1);
+  assert.equal(summary.monthlySlotCount, 0);
+  assert.deepEqual(summary.weeklyDays, ["wednesday"]);
+});
+
+test("summarize counts a monthly published slot", () => {
+  const catalog: CatalogDocument = {
+    ...sampleStoredCatalog(),
+    slots: [
+      slot("slot_monthly", {
+        recurrence: {
+          kind: "monthly_nth_weekday",
+          weekday: "friday",
+          nth: 1,
+        },
+      }),
+    ],
+  };
+  const summary = summarizePublicScheduleActivation(catalog);
+  assert.equal(summary.monthlySlotCount, 1);
+  assert.equal(summary.weeklySlotCount, 0);
+  assert.deepEqual(summary.weeklyDays, []);
+});
+
+test("summarize counts multiple published slots", () => {
+  const catalog: CatalogDocument = {
+    ...sampleStoredCatalog(),
+    slots: [
+      slot("slot_a"),
+      slot("slot_b", {
+        recurrence: { kind: "weekly", weekday: "tuesday" },
+      }),
+      slot("slot_c", {
+        recurrence: {
+          kind: "monthly_nth_weekday",
+          weekday: "monday",
+          nth: 2,
+        },
+      }),
+      slot("slot_draft", { status: "draft" }),
+    ],
+  };
+  const summary = summarizePublicScheduleActivation(catalog);
+  assert.equal(summary.publishedSlotCount, 3);
+  assert.equal(summary.weeklySlotCount, 2);
+  assert.equal(summary.monthlySlotCount, 1);
+});
+
+test("summarize deduplicates the same weekday", () => {
+  const catalog: CatalogDocument = {
+    ...sampleStoredCatalog(),
+    slots: [
+      slot("slot_a", {
+        recurrence: { kind: "weekly", weekday: "monday" },
+        startTime: "10:00",
+        endTime: "11:00",
+      }),
+      slot("slot_b", {
+        recurrence: { kind: "weekly", weekday: "monday" },
+        startTime: "18:00",
+        endTime: "19:00",
+      }),
+    ],
+  };
+  const summary = summarizePublicScheduleActivation(catalog);
+  assert.equal(summary.publishedSlotCount, 2);
+  assert.equal(summary.weeklySlotCount, 2);
+  assert.deepEqual(summary.weeklyDays, ["monday"]);
+});
+
+test("summarize orders weekly days monday to sunday", () => {
+  const catalog: CatalogDocument = {
+    ...sampleStoredCatalog(),
+    slots: [
+      slot("slot_sun", {
+        recurrence: { kind: "weekly", weekday: "sunday" },
+      }),
+      slot("slot_wed", {
+        recurrence: { kind: "weekly", weekday: "wednesday" },
+      }),
+      slot("slot_mon", {
+        recurrence: { kind: "weekly", weekday: "monday" },
+      }),
+    ],
+  };
+  const summary = summarizePublicScheduleActivation(catalog);
+  assert.deepEqual(summary.weeklyDays, ["monday", "wednesday", "sunday"]);
+});
+
+test("summarize omits weekdays without published weekly slots", () => {
+  const catalog: CatalogDocument = {
+    ...sampleStoredCatalog(),
+    slots: [
+      slot("slot_fri", {
+        recurrence: { kind: "weekly", weekday: "friday" },
+      }),
+    ],
+  };
+  const summary = summarizePublicScheduleActivation(catalog);
+  assert.deepEqual(summary.weeklyDays, ["friday"]);
+  assert.equal(summary.weeklyDays.includes("monday"), false);
+});
+
+test("summarize ignores non-published coach status", () => {
+  const catalog: CatalogDocument = {
+    ...sampleStoredCatalog(),
+    coaches: [
+      {
+        id: "coach_1",
+        publicName: "Draft Coach",
+        status: "draft",
+      },
+    ],
+    slots: [slot("slot_pub")],
+  };
+  const summary = summarizePublicScheduleActivation(catalog);
+  assert.equal(summary.publishedSlotCount, 1);
+  assert.equal(summary.weeklySlotCount, 1);
+});
+
+test("summarize ignores missing coach", () => {
+  const catalog: CatalogDocument = {
+    ...sampleStoredCatalog(),
+    coaches: [],
+    slots: [slot("slot_orphan", { coachId: "coach_missing" })],
+  };
+  const summary = summarizePublicScheduleActivation(catalog);
+  assert.equal(summary.publishedSlotCount, 1);
+});
+
+test("summarize counts simultaneous published slots", () => {
+  const catalog: CatalogDocument = {
+    ...sampleStoredCatalog(),
+    slots: [
+      slot("slot_a", {
+        recurrence: { kind: "weekly", weekday: "monday" },
+        startTime: "18:00",
+        endTime: "19:00",
+      }),
+      slot("slot_b", {
+        recurrence: { kind: "weekly", weekday: "monday" },
+        startTime: "18:00",
+        endTime: "19:00",
+        label: "Other",
+      }),
+    ],
+  };
+  const summary = summarizePublicScheduleActivation(catalog);
+  assert.equal(summary.publishedSlotCount, 2);
+  assert.equal(summary.weeklySlotCount, 2);
+});
+
+test("summarize does not mutate the catalog", () => {
+  const catalog: CatalogDocument = {
+    ...sampleStoredCatalog(),
+    slots: [slot("slot_pub")],
+  };
+  const snapshot = structuredClone(catalog);
+  summarizePublicScheduleActivation(catalog);
+  assert.deepEqual(catalog, snapshot);
+});
+
+test("summarize returns a freshly created result object", () => {
+  const catalog: CatalogDocument = {
+    ...sampleStoredCatalog(),
+    slots: [
+      slot("slot_mon", {
+        recurrence: { kind: "weekly", weekday: "monday" },
+      }),
+    ],
+  };
+  const first = summarizePublicScheduleActivation(catalog);
+  const second = summarizePublicScheduleActivation(catalog);
+  assert.notEqual(first, second);
+  assert.notEqual(first.weeklyDays, second.weeklyDays);
+  assert.deepEqual(first, second);
+});
+
+test("confirmation required when enabling from absent", () => {
+  assert.equal(
+    requiresPublicScheduleActivationConfirmation(undefined, true),
+    true,
+  );
+});
+
+test("confirmation required when enabling from false", () => {
+  assert.equal(
+    requiresPublicScheduleActivationConfirmation(false, true),
+    true,
+  );
+});
+
+test("confirmation not required when disabling from true", () => {
+  assert.equal(
+    requiresPublicScheduleActivationConfirmation(true, false),
+    false,
+  );
+});
+
+test("confirmation not required when staying true", () => {
+  assert.equal(
+    requiresPublicScheduleActivationConfirmation(true, true),
+    false,
+  );
+});
+
+test("confirmation not required when setting false from absent", () => {
+  assert.equal(
+    requiresPublicScheduleActivationConfirmation(undefined, false),
+    false,
+  );
+});
+
+test("confirmation not required when staying false", () => {
+  assert.equal(
+    requiresPublicScheduleActivationConfirmation(false, false),
+    false,
+  );
 });

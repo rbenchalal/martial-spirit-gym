@@ -11,8 +11,11 @@ import {
   createLoadedCatalogAdminState,
   createNewCatalogAdminState,
   replaceLocalCatalog,
+  requiresPublicScheduleActivationConfirmation,
+  summarizePublicScheduleActivation,
   type CatalogAdminState,
 } from "@/lib/catalog/admin-model";
+import type { Weekday } from "@/lib/catalog/types";
 import CoachesPanel from "@/components/admin/catalog/CoachesPanel";
 import SlotsPanel from "@/components/admin/catalog/SlotsPanel";
 
@@ -36,6 +39,19 @@ const FIXED_MESSAGES = {
   unexpected: "Une erreur inattendue est survenue.",
   network: "Impossible de joindre le serveur.",
 } as const;
+
+const WEEKDAY_LABELS: Record<Weekday, string> = {
+  monday: "Lundi",
+  tuesday: "Mardi",
+  wednesday: "Mercredi",
+  thursday: "Jeudi",
+  friday: "Vendredi",
+  saturday: "Samedi",
+  sunday: "Dimanche",
+};
+
+const PUBLIC_SCHEDULE_ACTIVATION_CONFIRM =
+  "Activer le planning catalogue autorisera le site public à remplacer entièrement le planning actuel dès l'enregistrement. Confirmez que tous les créneaux publiés ont été vérifiés.";
 
 function isCatalogDocument(value: unknown): value is CatalogDocument {
   if (!value || typeof value !== "object") {
@@ -259,11 +275,51 @@ export default function CatalogAdminApp() {
     setState(replaceLocalCatalog(state, catalog));
   };
 
+  const handlePublicScheduleEnabledChange = (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    if (!state) {
+      return;
+    }
+
+    const nextValue = event.target.checked;
+    const currentValue = state.catalog.publicScheduleEnabled;
+
+    if (
+      requiresPublicScheduleActivationConfirmation(currentValue, nextValue)
+    ) {
+      const confirmed = window.confirm(PUBLIC_SCHEDULE_ACTIVATION_CONFIRM);
+      if (!confirmed) {
+        return;
+      }
+    }
+
+    handleLocalCatalogChange({
+      ...state.catalog,
+      publicScheduleEnabled: nextValue,
+    });
+  };
+
   const saveDisabled =
     loadStatus !== "ready" ||
     state === null ||
     !state.dirty ||
     isSaving;
+
+  const publicScheduleSummary =
+    state !== null
+      ? summarizePublicScheduleActivation(state.catalog)
+      : null;
+  const publicScheduleEnabled =
+    state?.catalog.publicScheduleEnabled === true;
+  const coveredDaysLabel =
+    publicScheduleSummary === null
+      ? ""
+      : publicScheduleSummary.weeklyDays.length === 0
+        ? "Aucun"
+        : publicScheduleSummary.weeklyDays
+            .map((day) => WEEKDAY_LABELS[day])
+            .join(", ");
 
   return (
     <main className="min-h-screen bg-black text-white">
@@ -398,6 +454,81 @@ export default function CatalogAdminApp() {
               catalog={state.catalog}
               onCatalogChange={handleLocalCatalogChange}
             />
+
+            <section className="rounded-2xl border border-white/10 bg-zinc-950/70 p-6">
+              <h2 className="text-xl font-semibold">Planning public</h2>
+              <p className="mt-2 text-sm text-zinc-300">
+                Cette option ne prend effet qu&apos;après enregistrement du
+                catalogue.
+              </p>
+
+              <p className="mt-4 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-100">
+                Une fois enregistrée, cette option autorise le site public à
+                remplacer entièrement le planning actuel par les créneaux
+                publiés du catalogue. Vérifiez que le planning est complet
+                avant de l&apos;activer.
+              </p>
+
+              <div className="mt-4 flex flex-wrap items-center gap-3">
+                <label className="flex cursor-pointer items-center gap-3 text-sm text-zinc-100">
+                  <input
+                    type="checkbox"
+                    checked={publicScheduleEnabled}
+                    onChange={handlePublicScheduleEnabledChange}
+                    className="h-4 w-4 rounded border-white/30 bg-black/40 text-red-500 focus:ring-red-500/40"
+                  />
+                  Afficher le planning catalogue sur le site public
+                </label>
+                <span className="rounded-lg border border-white/10 bg-black/40 px-3 py-1 text-sm text-zinc-200">
+                  {publicScheduleEnabled ? "Activé" : "Désactivé"}
+                </span>
+              </div>
+
+              {publicScheduleSummary ? (
+                <dl className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                  <div className="rounded-xl border border-white/10 bg-black/40 p-4">
+                    <dt className="text-xs uppercase tracking-wide text-zinc-400">
+                      Créneaux publiés
+                    </dt>
+                    <dd className="mt-1 text-2xl font-semibold">
+                      {publicScheduleSummary.publishedSlotCount}
+                    </dd>
+                  </div>
+                  <div className="rounded-xl border border-white/10 bg-black/40 p-4">
+                    <dt className="text-xs uppercase tracking-wide text-zinc-400">
+                      Hebdomadaires
+                    </dt>
+                    <dd className="mt-1 text-2xl font-semibold">
+                      {publicScheduleSummary.weeklySlotCount}
+                    </dd>
+                  </div>
+                  <div className="rounded-xl border border-white/10 bg-black/40 p-4">
+                    <dt className="text-xs uppercase tracking-wide text-zinc-400">
+                      Mensuels
+                    </dt>
+                    <dd className="mt-1 text-2xl font-semibold">
+                      {publicScheduleSummary.monthlySlotCount}
+                    </dd>
+                  </div>
+                  <div className="rounded-xl border border-white/10 bg-black/40 p-4">
+                    <dt className="text-xs uppercase tracking-wide text-zinc-400">
+                      Jours couverts
+                    </dt>
+                    <dd className="mt-1 text-sm font-semibold leading-snug">
+                      {coveredDaysLabel}
+                    </dd>
+                  </div>
+                </dl>
+              ) : null}
+
+              {publicScheduleSummary &&
+              publicScheduleSummary.publishedSlotCount === 0 ? (
+                <p className="mt-4 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-100">
+                  Aucun créneau publié. Même activé, le catalogue ne remplacera
+                  pas le planning actuel.
+                </p>
+              ) : null}
+            </section>
 
             <section className="rounded-2xl border border-white/10 bg-zinc-950/70 p-6">
               <h2 className="text-xl font-semibold">Enregistrement</h2>
