@@ -44,7 +44,8 @@ function noneResponse(): Response {
 /**
  * Public catalog schedule handler.
  * Never authenticates; never exposes store internals.
- * Returns source "none" whenever structured slots are unavailable.
+ * Returns source "none" unless the catalog is explicitly enabled
+ * and the public projection contains at least one slot.
  */
 export async function handleGetPublicSchedule(
   dependencies: PublicScheduleHttpDependencies,
@@ -60,8 +61,13 @@ export async function handleGetPublicSchedule(
     return noneResponse();
   }
 
+  const catalog = result.value;
+  if (catalog.publicScheduleEnabled !== true) {
+    return noneResponse();
+  }
+
   try {
-    const projected = projectPublicSchedule(result.value);
+    const projected = projectPublicSchedule(catalog);
     if (projected.slots.length === 0) {
       return noneResponse();
     }

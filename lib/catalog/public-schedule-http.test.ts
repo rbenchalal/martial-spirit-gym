@@ -50,6 +50,15 @@ function baseDocument(
   };
 }
 
+function enabledDocument(
+  overrides: Partial<CatalogDocument> = {},
+): CatalogDocument {
+  return baseDocument({
+    publicScheduleEnabled: true,
+    ...overrides,
+  });
+}
+
 async function readJson(
   response: Response,
 ): Promise<PublicScheduleHttpResponse> {
@@ -73,11 +82,15 @@ function assertNoProviderLeak(bodyText: string) {
   assert.equal(bodyText.includes(PROVIDER_LEAK), false);
 }
 
+function assertFlagNotExposed(bodyText: string) {
+  assert.equal(bodyText.includes("publicScheduleEnabled"), false);
+}
+
 function createDeps(
   overrides: Partial<PublicScheduleHttpDependencies> = {},
 ): PublicScheduleHttpDependencies {
   return {
-    readCatalog: async () => ({ ok: true, value: baseDocument() }),
+    readCatalog: async () => ({ ok: true, value: enabledDocument() }),
     ...overrides,
   };
 }
@@ -135,6 +148,7 @@ test("does not expose internal catalog fields", async () => {
   assert.equal(text.includes("segment_hidden"), false);
   assert.equal(text.includes("\"capacity\""), false);
   assert.equal(text.includes("coachId"), false);
+  assertFlagNotExposed(text);
 
   assert.equal(body.source, "catalog");
   if (body.source === "catalog") {
@@ -147,7 +161,7 @@ test("draft slots are excluded from the public response", async () => {
     createDeps({
       readCatalog: async () => ({
         ok: true,
-        value: baseDocument({
+        value: enabledDocument({
           slots: [
             {
               id: "slot_draft",
@@ -175,7 +189,7 @@ test("empty catalog returns source none", async () => {
       createDeps({
         readCatalog: async () => ({
           ok: true,
-          value: baseDocument({ coaches: [], slots: [] }),
+          value: enabledDocument({ coaches: [], slots: [] }),
         }),
       }),
     ),
@@ -190,7 +204,7 @@ test("draft-only catalog returns source none", async () => {
       createDeps({
         readCatalog: async () => ({
           ok: true,
-          value: baseDocument({
+          value: enabledDocument({
             slots: [
               {
                 id: "slot_draft",
@@ -217,7 +231,7 @@ test("published slot with missing coach returns source none", async () => {
       createDeps({
         readCatalog: async () => ({
           ok: true,
-          value: baseDocument({
+          value: enabledDocument({
             coaches: [],
             slots: [
               {
@@ -365,7 +379,7 @@ test("read exception returns HTTP 200 with source none", async () => {
 });
 
 test("projection exception returns HTTP 200 with source none", async () => {
-  const catalog = baseDocument();
+  const catalog = enabledDocument();
   Object.defineProperty(catalog, "slots", {
     get() {
       throw new Error(`projection failed ${PROVIDER_LEAK}`);
@@ -423,7 +437,7 @@ test("readCatalog is called exactly once", async () => {
     createDeps({
       readCatalog: async () => {
         calls += 1;
-        return { ok: true, value: baseDocument() };
+        return { ok: true, value: enabledDocument() };
       },
     }),
   );
@@ -436,7 +450,7 @@ test("two published slots are both returned", async () => {
       createDeps({
         readCatalog: async () => ({
           ok: true,
-          value: baseDocument({
+          value: enabledDocument({
             coaches: [
               {
                 id: "coach_1",
@@ -491,7 +505,7 @@ test("non-published coach status does not hide a published slot", async () => {
       createDeps({
         readCatalog: async () => ({
           ok: true,
-          value: baseDocument({
+          value: enabledDocument({
             coaches: [
               {
                 id: "coach_1",
@@ -512,10 +526,268 @@ test("non-published coach status does not hide a published slot", async () => {
 
 test("controller requires no authentication or cookies", async () => {
   const response = await handleGetPublicSchedule({
-    readCatalog: async () => ({ ok: true, value: baseDocument() }),
+    readCatalog: async () => ({ ok: true, value: enabledDocument() }),
   });
   assert.equal(response.status, 200);
   const body = await readJson(response);
   assert.equal(body.source, "catalog");
   assert.equal(handleGetPublicSchedule.length, 1);
+});
+
+// --- M5C0-B: activation lock ---
+
+test("absent publicScheduleEnabled with published slot returns HTTP 200", async () => {
+  const response = await handleGetPublicSchedule(
+    createDeps({
+      readCatalog: async () => ({ ok: true, value: baseDocument() }),
+    }),
+  );
+  assert.equal(response.status, 200);
+});
+
+test("absent publicScheduleEnabled with published slot returns source none", async () => {
+  const body = await readJson(
+    await handleGetPublicSchedule(
+      createDeps({
+        readCatalog: async () => ({ ok: true, value: baseDocument() }),
+      }),
+    ),
+  );
+  assert.equal(body.source, "none");
+  assert.deepEqual(body.slots, []);
+});
+
+test("publicScheduleEnabled false with published slot returns source none", async () => {
+  const body = await readJson(
+    await handleGetPublicSchedule(
+      createDeps({
+        readCatalog: async () => ({
+          ok: true,
+          value: baseDocument({ publicScheduleEnabled: false }),
+        }),
+      }),
+    ),
+  );
+  assert.equal(body.source, "none");
+});
+
+test("publicScheduleEnabled true with published slot returns source catalog", async () => {
+  const body = await readJson(await handleGetPublicSchedule(createDeps()));
+  assert.equal(body.source, "catalog");
+});
+
+test("publicScheduleEnabled true with no slots returns source none", async () => {
+  const body = await readJson(
+    await handleGetPublicSchedule(
+      createDeps({
+        readCatalog: async () => ({
+          ok: true,
+          value: enabledDocument({ coaches: [], slots: [] }),
+        }),
+      }),
+    ),
+  );
+  assert.equal(body.source, "none");
+});
+
+test("publicScheduleEnabled true with drafts only returns source none", async () => {
+  const body = await readJson(
+    await handleGetPublicSchedule(
+      createDeps({
+        readCatalog: async () => ({
+          ok: true,
+          value: enabledDocument({
+            slots: [
+              {
+                id: "slot_draft",
+                label: "Draft",
+                coachId: "coach_1",
+                recurrence: { kind: "weekly", weekday: "monday" },
+                startTime: "18:00",
+                endTime: "19:00",
+                color: "#112233",
+                status: "draft",
+              },
+            ],
+          }),
+        }),
+      }),
+    ),
+  );
+  assert.equal(body.source, "none");
+});
+
+test("publicScheduleEnabled true with missing coach returns source none", async () => {
+  const body = await readJson(
+    await handleGetPublicSchedule(
+      createDeps({
+        readCatalog: async () => ({
+          ok: true,
+          value: enabledDocument({
+            coaches: [],
+            slots: [
+              {
+                id: "slot_orphan",
+                label: "Orphan",
+                coachId: "coach_missing",
+                recurrence: { kind: "weekly", weekday: "monday" },
+                startTime: "18:00",
+                endTime: "19:00",
+                color: "#112233",
+                status: "published",
+              },
+            ],
+          }),
+        }),
+      }),
+    ),
+  );
+  assert.equal(body.source, "none");
+});
+
+test("disabled handling does not mutate the received catalog", async () => {
+  const catalog = baseDocument({ publicScheduleEnabled: false });
+  const snapshot = structuredClone(catalog);
+  await handleGetPublicSchedule(
+    createDeps({
+      readCatalog: async () => ({ ok: true, value: catalog }),
+    }),
+  );
+  assert.deepEqual(catalog, snapshot);
+});
+
+test("enabled handling does not mutate the received catalog", async () => {
+  const catalog = enabledDocument();
+  const snapshot = structuredClone(catalog);
+  await handleGetPublicSchedule(
+    createDeps({
+      readCatalog: async () => ({ ok: true, value: catalog }),
+    }),
+  );
+  assert.deepEqual(catalog, snapshot);
+});
+
+test("readCatalog is called once when publicScheduleEnabled is absent", async () => {
+  let calls = 0;
+  await handleGetPublicSchedule(
+    createDeps({
+      readCatalog: async () => {
+        calls += 1;
+        return { ok: true, value: baseDocument() };
+      },
+    }),
+  );
+  assert.equal(calls, 1);
+});
+
+test("readCatalog is called once when publicScheduleEnabled is false", async () => {
+  let calls = 0;
+  await handleGetPublicSchedule(
+    createDeps({
+      readCatalog: async () => {
+        calls += 1;
+        return {
+          ok: true,
+          value: baseDocument({ publicScheduleEnabled: false }),
+        };
+      },
+    }),
+  );
+  assert.equal(calls, 1);
+});
+
+test("readCatalog is called once when publicScheduleEnabled is true", async () => {
+  let calls = 0;
+  await handleGetPublicSchedule(
+    createDeps({
+      readCatalog: async () => {
+        calls += 1;
+        return { ok: true, value: enabledDocument() };
+      },
+    }),
+  );
+  assert.equal(calls, 1);
+});
+
+test("projection is not reached when publicScheduleEnabled is absent", async () => {
+  const catalog = baseDocument();
+  Object.defineProperty(catalog, "slots", {
+    get() {
+      throw new Error("projection must not run when disabled");
+    },
+  });
+
+  const response = await handleGetPublicSchedule(
+    createDeps({
+      readCatalog: async () => ({ ok: true, value: catalog }),
+    }),
+  );
+  assert.equal(response.status, 200);
+  const body = await readJson(response);
+  assert.equal(body.source, "none");
+});
+
+test("projection is not reached when publicScheduleEnabled is false", async () => {
+  const catalog = baseDocument({ publicScheduleEnabled: false });
+  Object.defineProperty(catalog, "slots", {
+    get() {
+      throw new Error("projection must not run when disabled");
+    },
+  });
+
+  const response = await handleGetPublicSchedule(
+    createDeps({
+      readCatalog: async () => ({ ok: true, value: catalog }),
+    }),
+  );
+  assert.equal(response.status, 200);
+  const body = await readJson(response);
+  assert.equal(body.source, "none");
+});
+
+test("Cache-Control no-store when publicScheduleEnabled is absent", async () => {
+  const response = await handleGetPublicSchedule(
+    createDeps({
+      readCatalog: async () => ({ ok: true, value: baseDocument() }),
+    }),
+  );
+  assertNoStore(response);
+});
+
+test("Cache-Control no-store when publicScheduleEnabled is false", async () => {
+  const response = await handleGetPublicSchedule(
+    createDeps({
+      readCatalog: async () => ({
+        ok: true,
+        value: baseDocument({ publicScheduleEnabled: false }),
+      }),
+    }),
+  );
+  assertNoStore(response);
+});
+
+test("Cache-Control no-store when publicScheduleEnabled is true with catalog", async () => {
+  const response = await handleGetPublicSchedule(createDeps());
+  assertNoStore(response);
+  assert.equal(response.status, 200);
+  const clone = response.clone();
+  const body = await readJson(clone);
+  assert.equal(body.source, "catalog");
+});
+
+test("publicScheduleEnabled never appears in a fallback response", async () => {
+  const response = await handleGetPublicSchedule(
+    createDeps({
+      readCatalog: async () => ({
+        ok: true,
+        value: baseDocument({ publicScheduleEnabled: false }),
+      }),
+    }),
+  );
+  assertFlagNotExposed(await response.text());
+});
+
+test("publicScheduleEnabled never appears in a catalog response", async () => {
+  const response = await handleGetPublicSchedule(createDeps());
+  assertFlagNotExposed(await response.text());
 });
