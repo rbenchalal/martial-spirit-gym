@@ -543,3 +543,132 @@ test("applies M1 reference rules before writing", async () => {
   }
   assert.equal(evalCalls, 0);
 });
+
+test("reads a legacy document without publicScheduleEnabled", async () => {
+  const { client, store } = createFakeKv();
+  const document = baseDocument({ revision: 1 });
+  assert.equal("publicScheduleEnabled" in document, false);
+  store.set(CATALOG_KV_KEY, document);
+
+  const result = await readCatalogDocument(client);
+  assert.equal(result.ok, true);
+  if (result.ok) {
+    assert.equal("publicScheduleEnabled" in result.value, false);
+  }
+});
+
+test("does not inject publicScheduleEnabled false when reading a legacy document", async () => {
+  const { client, store } = createFakeKv();
+  store.set(CATALOG_KV_KEY, baseDocument({ revision: 1 }));
+
+  const result = await readCatalogDocument(client);
+  assert.equal(result.ok, true);
+  if (result.ok) {
+    assert.equal(result.value.publicScheduleEnabled, undefined);
+    assert.equal("publicScheduleEnabled" in result.value, false);
+  }
+});
+
+test("writes and reads publicScheduleEnabled false", async () => {
+  const { client } = createFakeKv();
+  const created = await writeCatalogDocument(
+    baseDocument({ publicScheduleEnabled: false }),
+    { expectedRevision: null, now: () => new Date("2026-11-01T00:00:00.000Z") },
+    client,
+  );
+  assert.equal(created.ok, true);
+  if (!created.ok) {
+    return;
+  }
+  assert.equal(created.value.publicScheduleEnabled, false);
+
+  const read = await readCatalogDocument(client);
+  assert.equal(read.ok, true);
+  if (read.ok) {
+    assert.equal(read.value.publicScheduleEnabled, false);
+  }
+});
+
+test("writes and reads publicScheduleEnabled true", async () => {
+  const { client } = createFakeKv();
+  const created = await writeCatalogDocument(
+    baseDocument({ publicScheduleEnabled: true }),
+    { expectedRevision: null, now: () => new Date("2026-11-01T00:00:00.000Z") },
+    client,
+  );
+  assert.equal(created.ok, true);
+  if (!created.ok) {
+    return;
+  }
+  assert.equal(created.value.publicScheduleEnabled, true);
+
+  const read = await readCatalogDocument(client);
+  assert.equal(read.ok, true);
+  if (read.ok) {
+    assert.equal(read.value.publicScheduleEnabled, true);
+  }
+});
+
+test("preserves the exact publicScheduleEnabled flag across write and read", async () => {
+  const { client } = createFakeKv();
+  const created = await writeCatalogDocument(
+    baseDocument({ publicScheduleEnabled: true }),
+    { expectedRevision: null, now: () => new Date("2026-11-01T00:00:00.000Z") },
+    client,
+  );
+  assert.equal(created.ok, true);
+  if (!created.ok) {
+    return;
+  }
+
+  const updated = await writeCatalogDocument(
+    {
+      ...created.value,
+      publicScheduleEnabled: false,
+    },
+    {
+      expectedRevision: created.value.revision,
+      now: () => new Date("2026-11-02T00:00:00.000Z"),
+    },
+    client,
+  );
+  assert.equal(updated.ok, true);
+  if (!updated.ok) {
+    return;
+  }
+  assert.equal(updated.value.publicScheduleEnabled, false);
+
+  const read = await readCatalogDocument(client);
+  assert.equal(read.ok, true);
+  if (read.ok) {
+    assert.equal(read.value.publicScheduleEnabled, false);
+  }
+});
+
+test("rejects non-boolean publicScheduleEnabled before writing", async () => {
+  let evalCalls = 0;
+  const { client } = createFakeKv({
+    evalImpl() {
+      evalCalls += 1;
+      return "ok";
+    },
+  });
+
+  const result = await writeCatalogDocument(
+    {
+      ...baseDocument(),
+      publicScheduleEnabled: "true",
+    },
+    { expectedRevision: null },
+    client,
+  );
+
+  assert.equal(result.ok, false);
+  if (!result.ok) {
+    assert.equal(result.code, "invalid_input");
+    assert.ok(
+      result.errors?.some((error) => error.path === "publicScheduleEnabled"),
+    );
+  }
+  assert.equal(evalCalls, 0);
+});

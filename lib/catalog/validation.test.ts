@@ -894,3 +894,126 @@ test("does not mutate the input object", () => {
   validateCatalogDocument(input);
   assert.deepEqual(input, snapshot);
 });
+
+test("accepts a legacy document without publicScheduleEnabled", () => {
+  const input = baseDocument();
+  assert.equal("publicScheduleEnabled" in input, false);
+  const result = validateCatalogDocument(input);
+  assert.equal(result.ok, true);
+});
+
+test("keeps publicScheduleEnabled absent after validation", () => {
+  const result = validateCatalogDocument(baseDocument());
+  assert.equal(result.ok, true);
+  if (result.ok) {
+    assert.equal("publicScheduleEnabled" in result.value, false);
+  }
+});
+
+test("accepts publicScheduleEnabled false", () => {
+  const result = validateCatalogDocument(
+    baseDocument({ publicScheduleEnabled: false }),
+  );
+  assert.equal(result.ok, true);
+});
+
+test("keeps publicScheduleEnabled false after validation", () => {
+  const result = validateCatalogDocument(
+    baseDocument({ publicScheduleEnabled: false }),
+  );
+  assert.equal(result.ok, true);
+  if (result.ok) {
+    assert.equal(result.value.publicScheduleEnabled, false);
+  }
+});
+
+test("accepts publicScheduleEnabled true", () => {
+  const result = validateCatalogDocument(
+    baseDocument({ publicScheduleEnabled: true }),
+  );
+  assert.equal(result.ok, true);
+});
+
+test("keeps publicScheduleEnabled true after validation", () => {
+  const result = validateCatalogDocument(
+    baseDocument({ publicScheduleEnabled: true }),
+  );
+  assert.equal(result.ok, true);
+  if (result.ok) {
+    assert.equal(result.value.publicScheduleEnabled, true);
+  }
+});
+
+test("rejects publicScheduleEnabled string true", () => {
+  assertInvalid(
+    {
+      ...baseDocument(),
+      publicScheduleEnabled: "true",
+    },
+    [{ path: "publicScheduleEnabled", code: "invalid_type" }],
+  );
+});
+
+test("rejects publicScheduleEnabled number", () => {
+  assertInvalid(
+    {
+      ...baseDocument(),
+      publicScheduleEnabled: 1,
+    },
+    [{ path: "publicScheduleEnabled", code: "invalid_type" }],
+  );
+});
+
+test("rejects publicScheduleEnabled null", () => {
+  assertInvalid(
+    {
+      ...baseDocument(),
+      publicScheduleEnabled: null,
+    },
+    [{ path: "publicScheduleEnabled", code: "invalid_type" }],
+  );
+});
+
+test("rejects publicScheduleEnabled array", () => {
+  assertInvalid(
+    {
+      ...baseDocument(),
+      publicScheduleEnabled: [],
+    },
+    [{ path: "publicScheduleEnabled", code: "invalid_type" }],
+  );
+});
+
+test("publicScheduleEnabled errors use the exact field path", () => {
+  const result = validateCatalogDocument({
+    ...baseDocument(),
+    publicScheduleEnabled: "yes",
+  });
+  assert.equal(result.ok, false);
+  if (!result.ok) {
+    assert.ok(
+      result.errors.some((error) => error.path === "publicScheduleEnabled"),
+    );
+  }
+});
+
+test("publicScheduleEnabled validation does not mutate input", () => {
+  const input = {
+    ...baseDocument(),
+    publicScheduleEnabled: "true" as unknown as boolean,
+  };
+  const snapshot = structuredClone(input);
+  validateCatalogDocument(input);
+  assert.deepEqual(input, snapshot);
+});
+
+test("schemaVersion 1 remains accepted with publicScheduleEnabled", () => {
+  const result = validateCatalogDocument(
+    baseDocument({ publicScheduleEnabled: true }),
+  );
+  assert.equal(result.ok, true);
+  if (result.ok) {
+    assert.equal(result.value.schemaVersion, 1);
+    assert.equal(result.value.publicScheduleEnabled, true);
+  }
+});

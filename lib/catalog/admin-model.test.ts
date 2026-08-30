@@ -594,3 +594,85 @@ test("coach and slot helpers do not mutate received objects", () => {
   removeCoach(catalog, "coach_1");
   assert.deepEqual(catalog, snapshot);
 });
+
+test("createEmptyCatalog omits publicScheduleEnabled", () => {
+  const catalog = createEmptyCatalog(FIXED_NOW);
+  assert.equal("publicScheduleEnabled" in catalog, false);
+});
+
+test("empty catalog is disabled by strict true check", () => {
+  const catalog = createEmptyCatalog(FIXED_NOW);
+  assert.equal(catalog.publicScheduleEnabled === true, false);
+});
+
+test("coach and slot mutations preserve publicScheduleEnabled true", () => {
+  const catalog: CatalogDocument = {
+    ...sampleStoredCatalog(),
+    publicScheduleEnabled: true,
+  };
+  const withCoach = addCoach(catalog, "Extra", FIXED_UUID);
+  assert.equal(withCoach.ok, true);
+  if (!withCoach.ok) return;
+  assert.equal(withCoach.catalog.publicScheduleEnabled, true);
+
+  const withSlot = addSlot(
+    withCoach.catalog,
+    baseSlotFields({ coachId: "coach_1" }),
+    FIXED_UUID_2,
+  );
+  assert.equal(withSlot.ok, true);
+  if (!withSlot.ok || !withSlot.slot) return;
+  assert.equal(withSlot.catalog.publicScheduleEnabled, true);
+
+  const renamed = renameCoach(withSlot.catalog, "coach_1", "Renamed");
+  assert.equal(renamed.ok, true);
+  if (!renamed.ok) return;
+  assert.equal(renamed.catalog.publicScheduleEnabled, true);
+
+  const updated = updateSlot(renamed.catalog, withSlot.slot.id, {
+    ...baseSlotFields(),
+    label: "Updated",
+  });
+  assert.equal(updated.ok, true);
+  if (!updated.ok) return;
+  assert.equal(updated.catalog.publicScheduleEnabled, true);
+});
+
+test("coach and slot mutations preserve publicScheduleEnabled false", () => {
+  const catalog: CatalogDocument = {
+    ...sampleStoredCatalog(),
+    publicScheduleEnabled: false,
+  };
+  const withCoach = addCoach(catalog, "Extra", FIXED_UUID);
+  assert.equal(withCoach.ok, true);
+  if (!withCoach.ok) return;
+  assert.equal(withCoach.catalog.publicScheduleEnabled, false);
+
+  const withSlot = addSlot(
+    withCoach.catalog,
+    baseSlotFields({ coachId: "coach_1" }),
+    FIXED_UUID_2,
+  );
+  assert.equal(withSlot.ok, true);
+  if (!withSlot.ok) return;
+  assert.equal(withSlot.catalog.publicScheduleEnabled, false);
+});
+
+test("coach and slot mutations preserve absent publicScheduleEnabled", () => {
+  const catalog = sampleStoredCatalog();
+  assert.equal("publicScheduleEnabled" in catalog, false);
+
+  const withCoach = addCoach(catalog, "Extra", FIXED_UUID);
+  assert.equal(withCoach.ok, true);
+  if (!withCoach.ok) return;
+  assert.equal("publicScheduleEnabled" in withCoach.catalog, false);
+
+  const withSlot = addSlot(
+    withCoach.catalog,
+    baseSlotFields({ coachId: "coach_1" }),
+    FIXED_UUID_2,
+  );
+  assert.equal(withSlot.ok, true);
+  if (!withSlot.ok) return;
+  assert.equal("publicScheduleEnabled" in withSlot.catalog, false);
+});

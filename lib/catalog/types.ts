@@ -167,6 +167,11 @@ export type CatalogDocument = {
   timeZone: TimeZoneId;
   /** ISO 8601 UTC instant (e.g. 2026-10-01T08:00:00.000Z). */
   updatedAt: string;
+  /**
+   * When strictly `true`, the public catalog schedule may be exposed.
+   * Absent or `false` means the public route must keep the legacy fallback.
+   */
+  publicScheduleEnabled?: boolean;
   categories: ActivityCategory[];
   activities: Activity[];
   programs: Program[];

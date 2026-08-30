@@ -696,6 +696,12 @@ export function validateCatalogDocument(value: unknown): CatalogValidationResult
     );
   }
 
+  validateOptionalBoolean(
+    errors,
+    "publicScheduleEnabled",
+    value.publicScheduleEnabled,
+  );
+
   const hasCategories = validateArrayField(errors, "categories", value.categories);
   const hasActivities = validateArrayField(errors, "activities", value.activities);
   const hasPrograms = validateArrayField(errors, "programs", value.programs);
