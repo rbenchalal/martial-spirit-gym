@@ -49,31 +49,9 @@ type EditableSocialLink = {
   ariaLabel: string;
 };
 
-type EditablePricingCard = {
-  title: string;
-  lines: string[];
-  featured: boolean;
-};
-
-type EditablePricingCards = {
-  collective: EditablePricingCard[];
-  privateCourses: EditablePricingCard[];
-  cards10: EditablePricingCard[];
-};
-
-type EditablePricingText = {
-  title: string;
-  description: string;
-};
-
 type GalleryTextDraft = {
   title: string;
   alt: string;
-};
-
-const fallbackPricingText: EditablePricingText = {
-  title: "Tarifs officiels Martial Spirit Gym",
-  description: "Formules collectives, cours privés et cartes 10 cours.",
 };
 
 const fallbackHero: EditableHero = {
@@ -103,24 +81,6 @@ const fallbackSocialLinks: EditableSocialLink[] = editableContent.socialLinks.ma
   href: link.href,
   ariaLabel: link.ariaLabel,
 }));
-
-const fallbackPricingCards: EditablePricingCards = {
-  collective: editableContent.pricing.collective.map((item) => ({
-    title: item.title,
-    lines: [...item.lines],
-    featured: item.featured,
-  })),
-  privateCourses: editableContent.pricing.privateCourses.map((item) => ({
-    title: item.title,
-    lines: [...item.lines],
-    featured: item.featured,
-  })),
-  cards10: editableContent.pricing.cards10.map((item) => ({
-    title: item.title,
-    lines: [...item.lines],
-    featured: item.featured,
-  })),
-};
 
 function isImageMedia(media: MediaItem) {
   return (
@@ -218,16 +178,6 @@ export default function AdminPage() {
   const [isSavingFeaturedVideo, setIsSavingFeaturedVideo] = useState(false);
   const [featuredVideoTitleInput, setFeaturedVideoTitleInput] = useState("");
   const [featuredVideoDescriptionInput, setFeaturedVideoDescriptionInput] = useState("");
-  const [pricingTitleInput, setPricingTitleInput] = useState(fallbackPricingText.title);
-  const [pricingDescriptionInput, setPricingDescriptionInput] = useState(
-    fallbackPricingText.description,
-  );
-  const [isSavingPricingText, setIsSavingPricingText] = useState(false);
-  const [pricingCardsInput, setPricingCardsInput] =
-    useState<EditablePricingCards>(fallbackPricingCards);
-  const [isSavingPricingCards, setIsSavingPricingCards] = useState(false);
-  const [pricingCardsStatusMessage, setPricingCardsStatusMessage] = useState<string | null>(null);
-  const [pricingCardsErrorMessage, setPricingCardsErrorMessage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const loadMedia = async () => {
@@ -396,45 +346,6 @@ export default function AdminPage() {
     }
   };
 
-  const loadPricingCards = async () => {
-    setPricingCardsErrorMessage(null);
-    try {
-      const response = await fetch("/api/admin/pricing-cards");
-      const data = (await response.json()) as {
-        pricingCards?: EditablePricingCards | null;
-        error?: string;
-      };
-
-      if (!response.ok) {
-        throw new Error(data.error ?? "Impossible de charger les cartes tarifaires.");
-      }
-
-      const nextPricingCards = data.pricingCards ?? fallbackPricingCards;
-      setPricingCardsInput({
-        collective: nextPricingCards.collective.map((item) => ({
-          title: item.title || "",
-          lines: Array.isArray(item.lines) ? item.lines : [],
-          featured: Boolean(item.featured),
-        })),
-        privateCourses: nextPricingCards.privateCourses.map((item) => ({
-          title: item.title || "",
-          lines: Array.isArray(item.lines) ? item.lines : [],
-          featured: Boolean(item.featured),
-        })),
-        cards10: nextPricingCards.cards10.map((item) => ({
-          title: item.title || "",
-          lines: Array.isArray(item.lines) ? item.lines : [],
-          featured: Boolean(item.featured),
-        })),
-      });
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Impossible de charger les cartes tarifaires.";
-      setPricingCardsErrorMessage(message);
-      setPricingCardsInput(fallbackPricingCards);
-    }
-  };
-
   const loadGallery = async () => {
     setErrorMessage(null);
     try {
@@ -481,35 +392,6 @@ export default function AdminPage() {
     }
   };
 
-  const loadPricingText = async () => {
-    setErrorMessage(null);
-    try {
-      const response = await fetch("/api/admin/pricing-text");
-      const data = (await response.json()) as {
-        pricingText?: EditablePricingText | null;
-        error?: string;
-      };
-
-      if (!response.ok) {
-        throw new Error(data.error ?? "Impossible de charger le texte des tarifs.");
-      }
-
-      const nextPricingText = data.pricingText ?? fallbackPricingText;
-      setPricingTitleInput(nextPricingText.title || fallbackPricingText.title);
-      setPricingDescriptionInput(
-        nextPricingText.description || fallbackPricingText.description,
-      );
-    } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : "Impossible de charger le texte des tarifs.";
-      setErrorMessage(message);
-      setPricingTitleInput(fallbackPricingText.title);
-      setPricingDescriptionInput(fallbackPricingText.description);
-    }
-  };
-
   useEffect(() => {
     void loadMedia();
     void loadHero();
@@ -517,10 +399,8 @@ export default function AdminPage() {
     void loadConditioning();
     void loadSchedule();
     void loadSocialLinks();
-    void loadPricingCards();
     void loadGallery();
     void loadFeaturedVideo();
-    void loadPricingText();
   }, []);
 
   useEffect(() => {
@@ -690,52 +570,6 @@ export default function AdminPage() {
       setErrorMessage(message);
     } finally {
       setIsSavingFeaturedVideo(false);
-    }
-  };
-
-  const handleSavePricingText = async () => {
-    setIsSavingPricingText(true);
-    setErrorMessage(null);
-    setStatusMessage(null);
-
-    try {
-      const response = await fetch("/api/admin/pricing-text", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          pricingText: {
-            title: pricingTitleInput,
-            description: pricingDescriptionInput,
-          },
-        }),
-      });
-
-      const data = (await response.json()) as {
-        pricingText?: EditablePricingText;
-        message?: string;
-        error?: string;
-      };
-
-      if (!response.ok) {
-        throw new Error(data.error ?? "Erreur pendant la mise a jour du texte des tarifs.");
-      }
-
-      if (data.pricingText) {
-        setPricingTitleInput(data.pricingText.title);
-        setPricingDescriptionInput(data.pricingText.description);
-      }
-
-      setStatusMessage(data.message ?? "Texte des tarifs enregistre.");
-    } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : "Erreur pendant la mise a jour du texte des tarifs.";
-      setErrorMessage(message);
-    } finally {
-      setIsSavingPricingText(false);
     }
   };
 
@@ -1017,95 +851,6 @@ export default function AdminPage() {
     }
   };
 
-  const handlePricingCardChange = (
-    group: keyof EditablePricingCards,
-    index: number,
-    field: "title" | "lines",
-    value: string,
-  ) => {
-    setPricingCardsInput((previous) => ({
-      ...previous,
-      [group]: previous[group].map((card, cardIndex) => {
-        if (cardIndex !== index) {
-          return card;
-        }
-
-        if (field === "title") {
-          return {
-            ...card,
-            title: value,
-          };
-        }
-
-        return {
-          ...card,
-          lines: value
-            .split("\n")
-            .map((line) => line.trim())
-            .filter(Boolean),
-        };
-      }),
-    }));
-  };
-
-  const handleSavePricingCards = async () => {
-    setIsSavingPricingCards(true);
-    setPricingCardsErrorMessage(null);
-    setPricingCardsStatusMessage(null);
-
-    try {
-      const response = await fetch("/api/admin/pricing-cards", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          pricingCards: pricingCardsInput,
-        }),
-      });
-
-      const data = (await response.json()) as {
-        pricingCards?: EditablePricingCards;
-        message?: string;
-        error?: string;
-      };
-
-      if (!response.ok) {
-        throw new Error(data.error ?? "Erreur pendant la mise a jour des cartes tarifaires.");
-      }
-
-      if (data.pricingCards) {
-        setPricingCardsInput({
-          collective: data.pricingCards.collective.map((card) => ({
-            title: card.title,
-            lines: [...card.lines],
-            featured: card.featured,
-          })),
-          privateCourses: data.pricingCards.privateCourses.map((card) => ({
-            title: card.title,
-            lines: [...card.lines],
-            featured: card.featured,
-          })),
-          cards10: data.pricingCards.cards10.map((card) => ({
-            title: card.title,
-            lines: [...card.lines],
-            featured: card.featured,
-          })),
-        });
-      }
-
-      setPricingCardsStatusMessage(data.message ?? "Cartes tarifaires enregistrees.");
-    } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : "Erreur pendant la mise a jour des cartes tarifaires.";
-      setPricingCardsErrorMessage(message);
-    } finally {
-      setIsSavingPricingCards(false);
-    }
-  };
-
   const handleAddToGallery = async (mediaItem: MediaItem) => {
     const exists = selectedGalleryItems.some((item) => item.url === mediaItem.url);
     if (exists) {
@@ -1219,9 +964,8 @@ export default function AdminPage() {
             Administration du contenu
           </h1>
           <p className="mt-3 max-w-2xl text-sm text-zinc-300">
-            Interface admin legere avec persistance durable pour la galerie dynamique,
-            la video en vedette et le texte des tarifs. Certaines autres sections
-            restent en preparation.
+            Interface admin legere avec persistance durable pour la galerie dynamique
+            et la video en vedette. Certaines autres sections restent en preparation.
           </p>
           <p className="mt-4">
             <a
@@ -1466,129 +1210,6 @@ export default function AdminPage() {
               {scheduleErrorMessage ? (
                 <p className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-200">
                   {scheduleErrorMessage}
-                </p>
-              ) : null}
-            </div>
-          </section>
-
-          <section className="rounded-2xl border border-white/10 bg-zinc-950/70 p-6">
-            <div className="mb-4">
-              <h2 className="text-xl font-semibold">Tarifs</h2>
-            </div>
-            <div className="mb-6 rounded-xl border border-white/10 bg-black/40 p-4">
-              <h3 className="text-sm font-semibold text-zinc-100">Texte de la section Tarifs</h3>
-              <p className="mt-1 text-xs text-zinc-400">
-                Ce texte est affiche publiquement dans la section Tarifs.
-              </p>
-              <div className="mt-4 space-y-3">
-                <label className="block">
-                  <span className="mb-2 block text-sm font-medium text-zinc-200">Titre</span>
-                  <input
-                    type="text"
-                    value={pricingTitleInput}
-                    onChange={(event) => setPricingTitleInput(event.target.value)}
-                    className="w-full rounded-lg border border-white/10 bg-black/60 px-3 py-2 text-sm text-white outline-none ring-red-500/40 focus:ring-2"
-                  />
-                </label>
-                <label className="block">
-                  <span className="mb-2 block text-sm font-medium text-zinc-200">
-                    Description
-                  </span>
-                  <textarea
-                    value={pricingDescriptionInput}
-                    onChange={(event) => setPricingDescriptionInput(event.target.value)}
-                    rows={3}
-                    className="w-full rounded-lg border border-white/10 bg-black/60 px-3 py-2 text-sm text-white outline-none ring-red-500/40 focus:ring-2"
-                  />
-                </label>
-                <button
-                  type="button"
-                  onClick={() => void handleSavePricingText()}
-                  disabled={isSavingPricingText}
-                  className="w-full rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm font-medium text-red-200 transition hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  Enregistrer le texte des tarifs
-                </button>
-              </div>
-            </div>
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-zinc-100">Cartes tarifaires</h3>
-              <button
-                type="button"
-                onClick={() => void handleSavePricingCards()}
-                disabled={isSavingPricingCards}
-                className="rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-2 text-sm font-medium text-red-200 transition hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                Enregistrer les cartes tarifaires
-              </button>
-            </div>
-            <div className="space-y-6">
-              {(
-                [
-                  { key: "collective", label: "Cours collectifs" },
-                  { key: "privateCourses", label: "Cours prives" },
-                  { key: "cards10", label: "Cartes 10 cours" },
-                ] as const
-              ).map((group) => (
-                <div key={group.key}>
-                  <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-zinc-300">
-                    {group.label}
-                  </h3>
-                  <div className="space-y-4">
-                    {pricingCardsInput[group.key].map((item, index) => (
-                      <div
-                        key={`${group.key}-${index}`}
-                        className="rounded-xl border border-white/10 bg-black/40 p-4"
-                      >
-                        <label className="mb-3 block">
-                          <span className="mb-2 block text-sm font-medium text-zinc-200">
-                            Titre
-                          </span>
-                          <input
-                            type="text"
-                            value={item.title}
-                            onChange={(event) =>
-                              handlePricingCardChange(
-                                group.key,
-                                index,
-                                "title",
-                                event.target.value,
-                              )
-                            }
-                            className="w-full rounded-lg border border-white/10 bg-black/60 px-3 py-2 text-sm text-white outline-none ring-red-500/40 focus:ring-2"
-                          />
-                        </label>
-                        <label className="block">
-                          <span className="mb-2 block text-sm font-medium text-zinc-200">
-                            Lignes de prix (une par ligne)
-                          </span>
-                          <textarea
-                            value={item.lines.join("\n")}
-                            onChange={(event) =>
-                              handlePricingCardChange(
-                                group.key,
-                                index,
-                                "lines",
-                                event.target.value,
-                              )
-                            }
-                            rows={3}
-                            className="w-full rounded-lg border border-white/10 bg-black/60 px-3 py-2 text-sm text-white outline-none ring-red-500/40 focus:ring-2"
-                          />
-                        </label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
-              {pricingCardsStatusMessage ? (
-                <p className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-200">
-                  {pricingCardsStatusMessage}
-                </p>
-              ) : null}
-              {pricingCardsErrorMessage ? (
-                <p className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-200">
-                  {pricingCardsErrorMessage}
                 </p>
               ) : null}
             </div>

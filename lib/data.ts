@@ -146,44 +146,6 @@ export const siteData = {
       "Un minimum de 3 participants est nécessaire pour que le cours ait lieu.",
     ],
   },
-  pricing: {
-    collective: [
-      {
-        title: "Cours collectifs - Kids (8+)",
-        lines: ["Trimestriel : 170 CHF", "Semestriel : 320 CHF", "Annuel : 600 CHF"],
-        featured: true,
-      },
-      {
-        title: "Cours collectifs - Adultes",
-        lines: ["Trimestriel : 280 CHF", "Semestriel : 540 CHF", "Annuel : 990 CHF"],
-        featured: false,
-      },
-    ],
-    privateCourses: [
-      {
-        title: "Cours privés - Adultes",
-        lines: ["Unité : 120 CHF", "5 cours : 550 CHF", "10 cours : 1000 CHF"],
-        featured: false,
-      },
-      {
-        title: "Cours privés - Kids",
-        lines: ["Unité : 75 CHF", "5 cours : 350 CHF", "10 cours : 650 CHF"],
-        featured: false,
-      },
-    ],
-    cards10: [
-      {
-        title: "Carte 10 cours - Adultes",
-        lines: ["250 CHF", "Valable 6 mois"],
-        featured: false,
-      },
-      {
-        title: "Carte 10 cours - Kids",
-        lines: ["180 CHF", "Valable 6 mois"],
-        featured: false,
-      },
-    ],
-  },
   featuredVideo: {
     src: "/videos/training-camp-kids.mp4",
     title: "Training Camp Kids",
