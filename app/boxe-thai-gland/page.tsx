@@ -185,7 +185,7 @@ export default function Page() {
             Demander un essai
           </Link>
           <Link
-            href="/#tarifs"
+            href="/tarifs"
             className="inline-flex text-sm font-semibold text-red-200 underline decoration-red-500/50 underline-offset-4 transition hover:text-white hover:decoration-red-500"
           >
             Voir les tarifs

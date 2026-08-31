@@ -30,7 +30,7 @@ export const siteData = {
     description:
       "Martial Spirit Gym est une école d'arts martiaux située à Gland, au cœur de la région de La Côte entre Nyon et Morges. Nous proposons des cours de boxe thaïlandaise (Muay Thai), MMA et préparation physique pour enfants et adultes, du débutant au pratiquant confirmé.",
     primaryCta: { label: "Voir le planning", href: "#planning" },
-    secondaryCta: { label: "Voir les tarifs", href: "#tarifs" },
+    secondaryCta: { label: "Voir les tarifs", href: "/tarifs" },
     highlights: [
       { label: "Positionnement", value: "École d'arts martiaux premium" },
       { label: "Disciplines", value: "Muay Thaï, MMA & Conditioning" },
@@ -249,7 +249,7 @@ export const siteData = {
     { label: "Accueil", href: "#hero" },
     { label: "Disciplines", href: "#disciplines" },
     { label: "Planning", href: "#planning" },
-    { label: "Tarifs", href: "#tarifs" },
+    { label: "Tarifs", href: "/tarifs" },
     { label: "FAQ", href: "#faq" },
     { label: "Contact", href: "#contact" },
   ],

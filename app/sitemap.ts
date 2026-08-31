@@ -8,5 +8,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
       url: `${CANONICAL_SITE_URL}/`,
       lastModified: new Date(),
     },
+    {
+      url: `${CANONICAL_SITE_URL}/tarifs`,
+      lastModified: new Date(),
+    },
   ];
 }
