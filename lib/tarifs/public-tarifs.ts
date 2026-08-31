@@ -91,13 +91,16 @@ export const PUBLIC_TARIFFS: PublicTariffs = {
       formulas: [
         formula("two-classes", "2 cours par semaine", [
           duration("one-month", "1 mois", [payment(1, 100)]),
-          duration("three-months", "3 mois", [payment(1, 260)]),
+          duration("three-months", "3 mois", [
+            payment(1, 260),
+            payment(2, 150),
+          ]),
           duration("six-months", "6 mois", [
             payment(1, 480),
             payment(2, 250),
           ]),
           duration("one-year", "1 an", [
-            payment(1, 890),
+            payment(1, 880),
             payment(2, 450),
             payment(3, 310),
           ]),

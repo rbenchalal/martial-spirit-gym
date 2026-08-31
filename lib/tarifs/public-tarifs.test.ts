@@ -98,8 +98,8 @@ test("each formula exposes four durations", () => {
   }
 });
 
-test("defines exactly 26 payment options", () => {
-  assert.equal(allPayments().length, 26);
+test("defines exactly 27 payment options", () => {
+  assert.equal(allPayments().length, 27);
 });
 
 test("adult two-classes payment values", () => {
@@ -109,13 +109,14 @@ test("adult two-classes payment values", () => {
   ]);
   assert.deepEqual(payments["three-months"], [
     { installments: 1, perInstallmentChf: 260, totalChf: 260 },
+    { installments: 2, perInstallmentChf: 150, totalChf: 300 },
   ]);
   assert.deepEqual(payments["six-months"], [
     { installments: 1, perInstallmentChf: 480, totalChf: 480 },
     { installments: 2, perInstallmentChf: 250, totalChf: 500 },
   ]);
   assert.deepEqual(payments["one-year"], [
-    { installments: 1, perInstallmentChf: 890, totalChf: 890 },
+    { installments: 1, perInstallmentChf: 880, totalChf: 880 },
     { installments: 2, perInstallmentChf: 450, totalChf: 900 },
     { installments: 3, perInstallmentChf: 310, totalChf: 930 },
   ]);
@@ -194,16 +195,42 @@ test("every duration includes a one-installment payment", () => {
   }
 });
 
-test("two-installment payments exist only for six months and one year", () => {
-  for (const duration of allDurations()) {
-    const hasTwo = duration.payments.some(
-      (option) => option.installments === 2,
-    );
-    if (duration.id === "six-months" || duration.id === "one-year") {
-      assert.equal(hasTwo, true);
-    } else {
-      assert.equal(hasTwo, false);
+test("two-installment payments exist only for six months, one year, and adult two-classes three months", () => {
+  for (const audience of PUBLIC_TARIFFS.audiences) {
+    for (const formula of audience.formulas) {
+      for (const duration of formula.durations) {
+        const hasTwo = duration.payments.some(
+          (option) => option.installments === 2,
+        );
+        const allowed =
+          duration.id === "six-months" ||
+          duration.id === "one-year" ||
+          (audience.id === "adults-parent-child" &&
+            formula.id === "two-classes" &&
+            duration.id === "three-months");
+        assert.equal(hasTwo, allowed);
+      }
     }
+  }
+});
+
+test("full-access three-months never offers a two-installment payment", () => {
+  for (const audience of PUBLIC_TARIFFS.audiences) {
+    const payments = paymentMap(audience.id, "full-access")["three-months"];
+    assert.equal(
+      payments.some((option) => option.installments === 2),
+      false,
+    );
+  }
+});
+
+test("reduced three-months never offers a two-installment payment", () => {
+  for (const formulaId of ["two-classes", "full-access"] as const) {
+    const payments = paymentMap("reduced", formulaId)["three-months"];
+    assert.equal(
+      payments.some((option) => option.installments === 2),
+      false,
+    );
   }
 });
 
