@@ -15,6 +15,8 @@
     "test:catalog-public-http": "node --test lib/catalog/public-schedule-http.test.ts",
     "test:catalog-public-view": "node --test lib/catalog/public-schedule-view.test.ts",
     "test:catalog-public-preview": "node --test lib/catalog/public-schedule-preview.test.ts",
+    "test:public-documents": "node --test lib/public-documents/validation.test.ts lib/public-documents/pdf-upload.test.ts",
+    "test:public-documents-store": "node --test lib/public-documents/store.test.ts",
     "test:tarifs": "node --test lib/tarifs/public-tarifs.test.ts"
   },
   "dependencies": {
