@@ -12,7 +12,8 @@
     "test:catalog-admin": "node --test lib/catalog/admin-http.test.ts",
     "test:catalog-admin-model": "node --test lib/catalog/admin-model.test.ts",
     "test:catalog-public": "node --test lib/catalog/public-schedule.test.ts",
-    "test:catalog-public-http": "node --test lib/catalog/public-schedule-http.test.ts"
+    "test:catalog-public-http": "node --test lib/catalog/public-schedule-http.test.ts",
+    "test:catalog-public-view": "node --test lib/catalog/public-schedule-view.test.ts"
   },
   "dependencies": {
     "@vercel/blob": "^2.3.1",
