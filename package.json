@@ -14,7 +14,8 @@
     "test:catalog-public": "node --test lib/catalog/public-schedule.test.ts",
     "test:catalog-public-http": "node --test lib/catalog/public-schedule-http.test.ts",
     "test:catalog-public-view": "node --test lib/catalog/public-schedule-view.test.ts",
-    "test:catalog-public-preview": "node --test lib/catalog/public-schedule-preview.test.ts"
+    "test:catalog-public-preview": "node --test lib/catalog/public-schedule-preview.test.ts",
+    "test:tarifs": "node --test lib/tarifs/public-tarifs.test.ts"
   },
   "dependencies": {
     "@vercel/blob": "^2.3.1",
