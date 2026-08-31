@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { CatalogDocument } from "@/lib/catalog/types";
 import type { CatalogValidationError } from "@/lib/catalog/validation";
 import {
@@ -15,7 +15,9 @@ import {
   summarizePublicScheduleActivation,
   type CatalogAdminState,
 } from "@/lib/catalog/admin-model";
+import { projectCatalogSchedulePreview } from "@/lib/catalog/public-schedule-preview";
 import type { Weekday } from "@/lib/catalog/types";
+import { PublicScheduleViewDisplay } from "@/components/catalog/PublicScheduleViewDisplay";
 import CoachesPanel from "@/components/admin/catalog/CoachesPanel";
 import SlotsPanel from "@/components/admin/catalog/SlotsPanel";
 
@@ -52,6 +54,13 @@ const WEEKDAY_LABELS: Record<Weekday, string> = {
 
 const PUBLIC_SCHEDULE_ACTIVATION_CONFIRM =
   "Activer le planning catalogue autorisera le site public à remplacer entièrement le planning actuel dès l'enregistrement. Confirmez que tous les créneaux publiés ont été vérifiés.";
+
+function formatMissingCoachPreviewWarning(count: number): string {
+  if (count === 1) {
+    return "1 créneau n'est pas affiché car son coach est introuvable.";
+  }
+  return `${count} créneaux ne sont pas affichés car leur coach est introuvable.`;
+}
 
 function isCatalogDocument(value: unknown): value is CatalogDocument {
   if (!value || typeof value !== "object") {
@@ -312,6 +321,13 @@ export default function CatalogAdminApp() {
       : null;
   const publicScheduleEnabled =
     state?.catalog.publicScheduleEnabled === true;
+  const schedulePreview = useMemo(
+    () =>
+      state !== null
+        ? projectCatalogSchedulePreview(state.catalog)
+        : null,
+    [state],
+  );
   const coveredDaysLabel =
     publicScheduleSummary === null
       ? ""
@@ -454,6 +470,42 @@ export default function CatalogAdminApp() {
               catalog={state.catalog}
               onCatalogChange={handleLocalCatalogChange}
             />
+
+            <details
+              open
+              className="rounded-2xl border border-white/10 bg-zinc-950/70 p-6"
+            >
+              <summary className="cursor-pointer text-xl font-semibold text-white">
+                Aperçu du planning
+              </summary>
+              <p className="mt-4 text-sm text-zinc-300">
+                Cet aperçu inclut les créneaux en brouillon et publiés. Il ne
+                modifie pas leur statut et n&apos;active pas le planning public.
+              </p>
+              {schedulePreview ? (
+                <p className="mt-4 text-sm text-zinc-300">
+                  Créneaux prévisualisables :{" "}
+                  {schedulePreview.diagnostics.previewableSlotCount}
+                </p>
+              ) : null}
+              {schedulePreview?.view ? (
+                <div className="mt-6">
+                  <PublicScheduleViewDisplay view={schedulePreview.view} />
+                </div>
+              ) : (
+                <p className="mt-4 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-100">
+                  Aucun créneau prévisualisable pour le moment.
+                </p>
+              )}
+              {schedulePreview &&
+              schedulePreview.diagnostics.excludedMissingCoachCount > 0 ? (
+                <p className="mt-4 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-100">
+                  {formatMissingCoachPreviewWarning(
+                    schedulePreview.diagnostics.excludedMissingCoachCount,
+                  )}
+                </p>
+              ) : null}
+            </details>
 
             <section className="rounded-2xl border border-white/10 bg-zinc-950/70 p-6">
               <h2 className="text-xl font-semibold">Planning public</h2>

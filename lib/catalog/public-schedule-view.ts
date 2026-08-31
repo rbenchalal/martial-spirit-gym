@@ -1,4 +1,5 @@
 import type { RecurrenceRule, Weekday } from "./types.ts";
+import type { PublicSchedule } from "./public-schedule.ts";
 
 export type PublicScheduleViewSlot = {
   id: string;
@@ -260,6 +261,39 @@ function buildPublicScheduleView(
 }
 
 /**
+ * Builds a grouped public schedule view from a validated M5A projection.
+ */
+export function buildPublicScheduleViewFromProjected(
+  projected: PublicSchedule,
+): PublicScheduleView | null {
+  if (projected.slots.length === 0) {
+    return null;
+  }
+
+  return buildPublicScheduleViewFromSlots(projected.timeZone, projected.slots);
+}
+
+function buildPublicScheduleViewFromSlots(
+  timeZone: string,
+  slots: unknown[],
+): PublicScheduleView | null {
+  if (slots.length === 0) {
+    return null;
+  }
+
+  const parsedSlots: ParsedCatalogSlot[] = [];
+  for (const slot of slots) {
+    const parsed = parseCatalogSlot(slot);
+    if (parsed === null) {
+      return null;
+    }
+    parsedSlots.push(parsed);
+  }
+
+  return buildPublicScheduleView(timeZone, parsedSlots);
+}
+
+/**
  * Defensively parses a public catalog schedule HTTP payload into a view model.
  * Returns null unless the full contract is valid and non-empty.
  */
@@ -280,16 +314,7 @@ export function parsePublicScheduleView(value: unknown): PublicScheduleView | nu
     return null;
   }
 
-  const parsedSlots: ParsedCatalogSlot[] = [];
-  for (const slot of value.slots) {
-    const parsed = parseCatalogSlot(slot);
-    if (parsed === null) {
-      return null;
-    }
-    parsedSlots.push(parsed);
-  }
-
-  return buildPublicScheduleView(value.timeZone, parsedSlots);
+  return buildPublicScheduleViewFromSlots(value.timeZone, value.slots);
 }
 
 /**
