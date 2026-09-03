@@ -19,6 +19,8 @@
     "test:public-documents-store": "node --test lib/public-documents/store.test.ts",
     "test:public-documents-admin": "node --test lib/public-documents/admin-http.test.ts",
     "test:public-documents-upload": "node --test lib/public-documents/upload-handler.test.ts",
+    "test:public-documents-resolve": "node --test lib/public-documents/resolve.test.ts",
+    "test:public-documents-public-http": "node --test lib/public-documents/public-http.test.ts",
     "test:tarifs": "node --test lib/tarifs/public-tarifs.test.ts"
   },
   "dependencies": {
