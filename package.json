@@ -17,6 +17,8 @@
     "test:catalog-public-preview": "node --test lib/catalog/public-schedule-preview.test.ts",
     "test:public-documents": "node --test lib/public-documents/validation.test.ts lib/public-documents/pdf-upload.test.ts",
     "test:public-documents-store": "node --test lib/public-documents/store.test.ts",
+    "test:public-documents-admin": "node --test lib/public-documents/admin-http.test.ts",
+    "test:public-documents-upload": "node --test lib/public-documents/upload-handler.test.ts",
     "test:tarifs": "node --test lib/tarifs/public-tarifs.test.ts"
   },
   "dependencies": {
