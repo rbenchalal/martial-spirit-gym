@@ -5,7 +5,11 @@ import Footer from "@/components/layout/Footer";
 import WhatsAppButton from "@/components/ui/WhatsAppButton";
 import PrimaryButton from "@/components/ui/PrimaryButton";
 import { PublicTarifsDisplay } from "@/components/tarifs/PublicTarifsDisplay";
-import { PUBLIC_TARIFFS } from "@/lib/tarifs/public-tarifs";
+import { readManagedPublicTariffsDocument } from "@/lib/tarifs/managed-store";
+import { loadResolvedPublicTariffs } from "@/lib/tarifs/resolve";
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export const metadata: Metadata = {
   title: "Tarifs | Martial Spirit Gym à Gland",
@@ -31,7 +35,11 @@ export const metadata: Metadata = {
   },
 };
 
-export default function Page() {
+export default async function Page() {
+  const resolved = await loadResolvedPublicTariffs(() =>
+    readManagedPublicTariffsDocument(),
+  );
+
   return (
     <div className="min-h-screen bg-black text-white">
       <Navbar />
@@ -51,7 +59,7 @@ export default function Page() {
             </p>
 
             <div className="mt-12">
-              <PublicTarifsDisplay tarifs={PUBLIC_TARIFFS} />
+              <PublicTarifsDisplay tarifs={resolved.tarifs} />
             </div>
 
             <section className="mt-16 rounded-2xl border border-white/10 bg-zinc-950/70 p-6 sm:p-8">
