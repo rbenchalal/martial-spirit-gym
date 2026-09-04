@@ -967,14 +967,20 @@ export default function AdminPage() {
             Interface admin legere avec persistance durable pour la galerie dynamique
             et la video en vedette. Certaines autres sections restent en preparation.
           </p>
-          <p className="mt-4">
+          <p className="mt-4 flex flex-wrap items-center gap-3">
             <a
               href="/admin/catalog"
               className="inline-flex items-center rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-2 text-sm font-medium text-red-200 transition hover:bg-red-500/20"
             >
               Catalogue / nouveau planning
             </a>
-            <span className="ml-3 text-sm text-zinc-400">en préparation</span>
+            <span className="text-sm text-zinc-400">en préparation</span>
+            <a
+              href="/admin/documents"
+              className="inline-flex items-center rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-2 text-sm font-medium text-red-200 transition hover:bg-red-500/20"
+            >
+              Documents publics
+            </a>
           </p>
         </header>
 
