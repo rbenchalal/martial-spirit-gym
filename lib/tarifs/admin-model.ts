@@ -4,6 +4,12 @@ import {
   type ManagedPublicTariffsDocument,
 } from "./managed-types.ts";
 import {
+  MANAGED_PAYMENT_INSTALLMENTS,
+  listManagedPaymentCells,
+  managedPaymentCellKey,
+  type ManagedPaymentInstallments,
+} from "./managed-matrix.ts";
+import {
   validateManagedPublicTariffsDocument,
   type ManagedPublicTariffsValidationIssue,
 } from "./managed-validation.ts";
@@ -99,6 +105,14 @@ export function paymentFieldKey(
   return `${audienceId}|${formulaId}|${durationId}|${installments}`;
 }
 
+export function durationPaymentsErrorKey(
+  audienceId: string,
+  formulaId: string,
+  durationId: string,
+): string {
+  return `${audienceId}|${formulaId}|${durationId}|payments`;
+}
+
 export function courseCardFieldKey(
   audience: string,
   courses: number,
@@ -106,34 +120,108 @@ export function courseCardFieldKey(
   return `${audience}|${courses}`;
 }
 
+export function isBlankAmountInput(raw: string): boolean {
+  return raw.trim().length === 0;
+}
+
+/**
+ * Always exposes the full 48-cell managed payment matrix.
+ * Labels come from the fixed structure; presence of an amount is not required.
+ */
 export function listPaymentFields(
   structure: PublicTariffs,
 ): PaymentFieldDescriptor[] {
   const fields: PaymentFieldDescriptor[] = [];
+
+  for (const cell of listManagedPaymentCells()) {
+    const audience = structure.audiences.find(
+      (item) => item.id === cell.audienceId,
+    );
+    const formula = audience?.formulas.find(
+      (item) => item.id === cell.formulaId,
+    );
+    const duration = formula?.durations.find(
+      (item) => item.id === cell.durationId,
+    );
+
+    fields.push({
+      key: cell.key,
+      audienceId: cell.audienceId,
+      audienceTitle: audience?.title ?? "",
+      formulaId: cell.formulaId,
+      formulaLabel: formula?.label ?? "",
+      durationId: cell.durationId,
+      durationLabel: duration?.label ?? "",
+      installments: cell.installments,
+    });
+  }
+
+  return fields;
+}
+
+export type PaymentMatrixRow = {
+  durationId: string;
+  durationLabel: string;
+  errorKey: string;
+  cells: PaymentFieldDescriptor[];
+};
+
+export type PaymentMatrixSection = {
+  audienceId: string;
+  audienceTitle: string;
+  audienceNote?: string;
+  formulaId: string;
+  formulaLabel: string;
+  rows: PaymentMatrixRow[];
+};
+
+export function listPaymentMatrixSections(
+  structure: PublicTariffs,
+): PaymentMatrixSection[] {
+  const sections: PaymentMatrixSection[] = [];
+
   for (const audience of structure.audiences) {
     for (const formula of audience.formulas) {
-      for (const duration of formula.durations) {
-        for (const payment of duration.payments) {
-          fields.push({
-            key: paymentFieldKey(
-              audience.id,
-              formula.id,
-              duration.id,
-              payment.installments,
-            ),
+      const rows: PaymentMatrixRow[] = formula.durations.map((duration) => ({
+        durationId: duration.id,
+        durationLabel: duration.label,
+        errorKey: durationPaymentsErrorKey(
+          audience.id,
+          formula.id,
+          duration.id,
+        ),
+        cells: MANAGED_PAYMENT_INSTALLMENTS.map((installments) => {
+          const key = managedPaymentCellKey(
+            audience.id,
+            formula.id,
+            duration.id,
+            installments,
+          );
+          return {
+            key,
             audienceId: audience.id,
             audienceTitle: audience.title,
             formulaId: formula.id,
             formulaLabel: formula.label,
             durationId: duration.id,
             durationLabel: duration.label,
-            installments: payment.installments,
-          });
-        }
-      }
+            installments,
+          };
+        }),
+      }));
+
+      sections.push({
+        audienceId: audience.id,
+        audienceTitle: audience.title,
+        audienceNote: audience.note,
+        formulaId: formula.id,
+        formulaLabel: formula.label,
+        rows,
+      });
     }
   }
-  return fields;
+
+  return sections;
 }
 
 export function listCourseCardFields(
@@ -153,20 +241,22 @@ function inputsFromTariffs(tariffs: PublicTariffs): {
   courseCardInputs: Record<string, string>;
 } {
   const paymentInputs: Record<string, string> = {};
-  for (const field of listPaymentFields(tariffs)) {
+  for (const cell of listManagedPaymentCells()) {
     const audience = tariffs.audiences.find(
-      (item) => item.id === field.audienceId,
+      (item) => item.id === cell.audienceId,
     );
     const formula = audience?.formulas.find(
-      (item) => item.id === field.formulaId,
+      (item) => item.id === cell.formulaId,
     );
     const duration = formula?.durations.find(
-      (item) => item.id === field.durationId,
+      (item) => item.id === cell.durationId,
     );
     const payment = duration?.payments.find(
-      (item) => item.installments === field.installments,
+      (item) => item.installments === cell.installments,
     );
-    paymentInputs[field.key] = String(payment?.perInstallmentChf ?? "");
+    paymentInputs[cell.key] = payment
+      ? String(payment.perInstallmentChf)
+      : "";
   }
 
   const courseCardInputs: Record<string, string> = {};
@@ -179,6 +269,18 @@ function inputsFromTariffs(tariffs: PublicTariffs): {
   }
 
   return { paymentInputs, courseCardInputs };
+}
+
+export function countFilledPaymentInputs(
+  paymentInputs: Record<string, string>,
+): number {
+  let count = 0;
+  for (const cell of listManagedPaymentCells()) {
+    if (!isBlankAmountInput(paymentInputs[cell.key] ?? "")) {
+      count += 1;
+    }
+  }
+  return count;
 }
 
 export function parsePositiveSafeIntegerInput(raw: string): AmountParseResult {
@@ -345,12 +447,41 @@ export function collectFieldErrors(
 ): Record<string, string> {
   const fieldErrors: Record<string, string> = {};
 
-  for (const field of listPaymentFields(state.structure)) {
-    const parsed = parsePositiveSafeIntegerInput(
-      state.paymentInputs[field.key] ?? "",
-    );
-    if (!parsed.ok) {
-      fieldErrors[field.key] = parsed.message;
+  for (const audience of state.structure.audiences) {
+    for (const formula of audience.formulas) {
+      for (const duration of formula.durations) {
+        const cells = MANAGED_PAYMENT_INSTALLMENTS.map((installments) => {
+          const key = paymentFieldKey(
+            audience.id,
+            formula.id,
+            duration.id,
+            installments,
+          );
+          return {
+            key,
+            installments,
+            raw: state.paymentInputs[key] ?? "",
+          };
+        });
+
+        if (cells.every((cell) => isBlankAmountInput(cell.raw))) {
+          fieldErrors[
+            durationPaymentsErrorKey(audience.id, formula.id, duration.id)
+          ] =
+            "Proposez au moins une modalité de paiement pour cette durée.";
+          continue;
+        }
+
+        for (const cell of cells) {
+          if (isBlankAmountInput(cell.raw)) {
+            continue;
+          }
+          const parsed = parsePositiveSafeIntegerInput(cell.raw);
+          if (!parsed.ok) {
+            fieldErrors[cell.key] = parsed.message;
+          }
+        }
+      }
     }
   }
 
@@ -379,23 +510,38 @@ export function buildManagedDocumentFromEditor(
   for (const audience of tariffs.audiences) {
     for (const formula of audience.formulas) {
       for (const duration of formula.durations) {
-        for (const payment of duration.payments) {
+        const payments: {
+          installments: ManagedPaymentInstallments;
+          perInstallmentChf: number;
+          totalChf: number;
+        }[] = [];
+
+        for (const installments of MANAGED_PAYMENT_INSTALLMENTS) {
           const key = paymentFieldKey(
             audience.id,
             formula.id,
             duration.id,
-            payment.installments,
+            installments,
           );
-          const parsed = parsePositiveSafeIntegerInput(
-            state.paymentInputs[key] ?? "",
-          );
+          const raw = state.paymentInputs[key] ?? "";
+          if (isBlankAmountInput(raw)) {
+            continue;
+          }
+
+          const parsed = parsePositiveSafeIntegerInput(raw);
           if (!parsed.ok) {
             fieldErrors[key] = parsed.message;
             continue;
           }
-          payment.perInstallmentChf = parsed.value;
-          payment.totalChf = payment.installments * parsed.value;
+
+          payments.push({
+            installments,
+            perInstallmentChf: parsed.value,
+            totalChf: installments * parsed.value,
+          });
         }
+
+        duration.payments = payments;
       }
     }
   }

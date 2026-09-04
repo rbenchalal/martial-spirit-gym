@@ -18,9 +18,10 @@ import {
   firstSaveMustStayDisabled,
   getPreviewTariffs,
   httpErrorMessage,
+  isBlankAmountInput,
   isEditorDirty,
   listCourseCardFields,
-  listPaymentFields,
+  listPaymentMatrixSections,
   parseAdminTariffsGetResponse,
   parseAdminTariffsPutResponse,
   requiresDirtyNavigationConfirmation,
@@ -56,7 +57,9 @@ export default function PublicTariffsAdminApp() {
   const fieldErrors = editor ? collectFieldErrors(editor) : {};
   const hasFieldErrors = Object.keys(fieldErrors).length > 0;
   const previewTariffs = editor ? getPreviewTariffs(editor) : null;
-  const paymentFields = editor ? listPaymentFields(editor.structure) : [];
+  const paymentSections = editor
+    ? listPaymentMatrixSections(editor.structure)
+    : [];
   const courseCardFields = editor ? listCourseCardFields(editor.structure) : [];
 
   const loadTariffs = useCallback(async () => {
@@ -432,127 +435,227 @@ export default function PublicTariffsAdminApp() {
               ) : null}
 
               <div className="space-y-10">
-                {editor.structure.audiences.map((audience) => (
-                  <div key={audience.id}>
-                    <h3 className="text-lg font-semibold text-white">
-                      {audience.title}
-                    </h3>
-                    {audience.note ? (
-                      <p className="mt-2 max-w-3xl text-sm text-zinc-400">
-                        {audience.note}
-                      </p>
-                    ) : null}
+                <p className="text-sm text-zinc-400">
+                  Laissez vide pour ne pas proposer cette modalité.
+                </p>
 
-                    {audience.formulas.map((formula) => (
-                      <div
-                        key={`${audience.id}-${formula.id}`}
-                        className="mt-6"
-                      >
-                        <h4 className="text-base font-semibold text-amber-200/90">
-                          {formula.label}
-                        </h4>
-                        <div className="mt-4 grid gap-4">
-                          {paymentFields
-                            .filter(
-                              (field) =>
-                                field.audienceId === audience.id &&
-                                field.formulaId === formula.id,
-                            )
-                            .map((field) => {
-                              const totalLabel = computePaymentTotalLabel(
-                                field.installments,
-                                editor.paymentInputs[field.key] ?? "",
-                              );
-                              return (
-                                <label
-                                  key={field.key}
-                                  className="rounded-xl border border-white/10 bg-black/40 p-4"
-                                >
-                                  <span className="block text-sm font-medium text-zinc-200">
-                                    {field.durationLabel} · paiement en{" "}
-                                    {field.installments} fois
+                {paymentSections.map((section, sectionIndex) => {
+                  const isFirstFormulaForAudience =
+                    paymentSections.findIndex(
+                      (item) => item.audienceId === section.audienceId,
+                    ) === sectionIndex;
+
+                  return (
+                  <div
+                    key={`${section.audienceId}-${section.formulaId}`}
+                    className="space-y-3"
+                  >
+                    <div>
+                      <h3 className="text-lg font-semibold text-white">
+                        {section.audienceTitle} — {section.formulaLabel}
+                      </h3>
+                      {isFirstFormulaForAudience && section.audienceNote ? (
+                        <p className="mt-2 max-w-3xl text-sm text-zinc-400">
+                          {section.audienceNote}
+                        </p>
+                      ) : null}
+                    </div>
+
+                    <div className="overflow-x-auto rounded-xl border border-white/10">
+                      <table className="min-w-[40rem] w-full border-collapse text-left text-sm">
+                        <thead className="bg-black/50 text-zinc-300">
+                          <tr>
+                            <th className="sticky left-0 z-10 bg-zinc-950 px-3 py-3 font-semibold text-zinc-200">
+                              Durée
+                            </th>
+                            <th className="px-3 py-3 font-semibold">
+                              Paiement 1×
+                            </th>
+                            <th className="px-3 py-3 font-semibold">
+                              Paiement 2×
+                            </th>
+                            <th className="px-3 py-3 font-semibold">
+                              Paiement 3×
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {section.rows.map((row) => (
+                            <tr
+                              key={row.durationId}
+                              className="border-t border-white/10 align-top"
+                            >
+                              <th
+                                scope="row"
+                                className="sticky left-0 z-10 bg-zinc-950 px-3 py-3 font-medium text-zinc-100"
+                              >
+                                {row.durationLabel}
+                                {fieldErrors[row.errorKey] ? (
+                                  <span className="mt-2 block text-xs font-normal text-red-300">
+                                    {fieldErrors[row.errorKey]}
                                   </span>
-                                  <span className="mt-3 block text-xs uppercase tracking-[0.14em] text-zinc-500">
-                                    Montant par échéance (CHF)
-                                  </span>
-                                  <input
-                                    type="text"
-                                    inputMode="numeric"
-                                    value={editor.paymentInputs[field.key] ?? ""}
-                                    onChange={(event) => {
-                                      const value = event.target.value;
-                                      setEditor((current) =>
-                                        current
-                                          ? setPaymentInput(
-                                              current,
-                                              field.key,
-                                              value,
-                                            )
-                                          : current,
-                                      );
-                                    }}
-                                    disabled={isSaving}
-                                    className="mt-2 w-full max-w-xs rounded-lg border border-white/10 bg-black/60 px-3 py-2 text-sm text-white outline-none ring-red-500/40 focus:ring-2"
-                                  />
-                                  <span className="mt-2 block text-sm text-zinc-300">
-                                    Total :{" "}
-                                    {totalLabel ?? "Corrigez le montant"}
-                                  </span>
-                                  {fieldErrors[field.key] ? (
-                                    <span className="mt-2 block text-sm text-red-300">
-                                      {fieldErrors[field.key]}
-                                    </span>
-                                  ) : null}
-                                </label>
-                              );
-                            })}
-                        </div>
-                      </div>
-                    ))}
+                                ) : null}
+                              </th>
+                              {row.cells.map((field) => {
+                                const rawValue =
+                                  editor.paymentInputs[field.key] ?? "";
+                                const isBlank = isBlankAmountInput(rawValue);
+                                const totalLabel =
+                                  field.installments > 1
+                                    ? computePaymentTotalLabel(
+                                        field.installments,
+                                        rawValue,
+                                      )
+                                    : null;
+                                const accessibleLabel = `${section.audienceTitle}, ${section.formulaLabel}, ${row.durationLabel}, paiement en ${field.installments} fois`;
+                                return (
+                                  <td key={field.key} className="px-3 py-3">
+                                    <label className="block">
+                                      <span className="sr-only">
+                                        {accessibleLabel}
+                                      </span>
+                                      <input
+                                        type="text"
+                                        inputMode="numeric"
+                                        value={rawValue}
+                                        placeholder="Non proposé"
+                                        aria-label={accessibleLabel}
+                                        onChange={(event) => {
+                                          const value = event.target.value;
+                                          setEditor((current) =>
+                                            current
+                                              ? setPaymentInput(
+                                                  current,
+                                                  field.key,
+                                                  value,
+                                                )
+                                              : current,
+                                          );
+                                        }}
+                                        disabled={isSaving}
+                                        className={`w-full min-w-[6.5rem] rounded-lg border px-3 py-2 text-sm outline-none ring-red-500/40 focus:ring-2 ${
+                                          isBlank
+                                            ? "border-white/10 bg-black/25 text-zinc-400 placeholder:text-zinc-600"
+                                            : "border-white/15 bg-black/60 text-white"
+                                        }`}
+                                      />
+                                    </label>
+                                    {field.installments > 1 ? (
+                                      <span className="mt-2 block text-xs text-zinc-400">
+                                        {isBlank
+                                          ? "Non proposé"
+                                          : totalLabel
+                                            ? `Total : ${totalLabel}`
+                                            : "Corrigez le montant"}
+                                      </span>
+                                    ) : null}
+                                    {fieldErrors[field.key] ? (
+                                      <span className="mt-2 block text-xs text-red-300">
+                                        {fieldErrors[field.key]}
+                                      </span>
+                                    ) : null}
+                                  </td>
+                                );
+                              })}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
-                ))}
+                  );
+                })}
 
                 <div>
                   <h3 className="text-lg font-semibold text-white">
                     Cartes de cours
                   </h3>
-                  <div className="mt-4 grid gap-4 md:grid-cols-2">
-                    {courseCardFields.map((field) => (
-                      <label
-                        key={field.key}
-                        className="rounded-xl border border-white/10 bg-black/40 p-4"
-                      >
-                        <span className="block text-sm font-medium text-zinc-200">
-                          {field.audienceLabel} · {field.courses} cours
-                        </span>
-                        <span className="mt-1 block text-sm text-zinc-400">
-                          Valable {field.validityMonths} mois
-                        </span>
-                        <span className="mt-3 block text-xs uppercase tracking-[0.14em] text-zinc-500">
-                          Prix (CHF)
-                        </span>
-                        <input
-                          type="text"
-                          inputMode="numeric"
-                          value={editor.courseCardInputs[field.key] ?? ""}
-                          onChange={(event) => {
-                            const value = event.target.value;
-                            setEditor((current) =>
-                              current
-                                ? setCourseCardInput(current, field.key, value)
-                                : current,
-                            );
-                          }}
-                          disabled={isSaving}
-                          className="mt-2 w-full rounded-lg border border-white/10 bg-black/60 px-3 py-2 text-sm text-white outline-none ring-red-500/40 focus:ring-2"
-                        />
-                        {fieldErrors[field.key] ? (
-                          <span className="mt-2 block text-sm text-red-300">
-                            {fieldErrors[field.key]}
-                          </span>
-                        ) : null}
-                      </label>
-                    ))}
+                  <p className="mt-2 text-sm text-zinc-400">
+                    Les prix des cartes sont obligatoires.
+                  </p>
+                  <div className="mt-4 overflow-x-auto rounded-xl border border-white/10">
+                    <table className="min-w-[28rem] w-full border-collapse text-left text-sm">
+                      <thead className="bg-black/50 text-zinc-300">
+                        <tr>
+                          <th className="sticky left-0 z-10 bg-zinc-950 px-3 py-3 font-semibold text-zinc-200">
+                            Carte
+                          </th>
+                          <th className="px-3 py-3 font-semibold">Adultes</th>
+                          <th className="px-3 py-3 font-semibold">Enfants</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {([5, 10] as const).map((courses) => {
+                          const adultField = courseCardFields.find(
+                            (field) =>
+                              field.audience === "adults" &&
+                              field.courses === courses,
+                          );
+                          const childrenField = courseCardFields.find(
+                            (field) =>
+                              field.audience === "children" &&
+                              field.courses === courses,
+                          );
+                          if (!adultField || !childrenField) {
+                            return null;
+                          }
+                          return (
+                            <tr
+                              key={courses}
+                              className="border-t border-white/10 align-top"
+                            >
+                              <th
+                                scope="row"
+                                className="sticky left-0 z-10 bg-zinc-950 px-3 py-3 font-medium text-zinc-100"
+                              >
+                                {courses} cours
+                                <span className="mt-1 block text-xs font-normal text-zinc-500">
+                                  Valable {adultField.validityMonths} /{" "}
+                                  {childrenField.validityMonths} mois
+                                </span>
+                              </th>
+                              {[adultField, childrenField].map((field) => (
+                                <td key={field.key} className="px-3 py-3">
+                                  <label className="block">
+                                    <span className="sr-only">
+                                      {field.audienceLabel} · {field.courses}{" "}
+                                      cours
+                                    </span>
+                                    <input
+                                      type="text"
+                                      inputMode="numeric"
+                                      value={
+                                        editor.courseCardInputs[field.key] ?? ""
+                                      }
+                                      aria-label={`${field.audienceLabel}, ${field.courses} cours`}
+                                      onChange={(event) => {
+                                        const value = event.target.value;
+                                        setEditor((current) =>
+                                          current
+                                            ? setCourseCardInput(
+                                                current,
+                                                field.key,
+                                                value,
+                                              )
+                                            : current,
+                                        );
+                                      }}
+                                      disabled={isSaving}
+                                      className="w-full min-w-[6.5rem] rounded-lg border border-white/15 bg-black/60 px-3 py-2 text-sm text-white outline-none ring-red-500/40 focus:ring-2"
+                                    />
+                                  </label>
+                                  {fieldErrors[field.key] ? (
+                                    <span className="mt-2 block text-xs text-red-300">
+                                      {fieldErrors[field.key]}
+                                    </span>
+                                  ) : null}
+                                </td>
+                              ))}
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
               </div>
