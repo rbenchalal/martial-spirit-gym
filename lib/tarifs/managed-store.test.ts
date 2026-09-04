@@ -423,10 +423,11 @@ test("reads and writes a document with an added installment modality", async () 
   const duration =
     document.tariffs.audiences[0].formulas[1].durations[1];
   assert.equal(duration.id, "three-months");
+  assert.equal(duration.payments.length, 2);
   duration.payments.push({
-    installments: 2,
+    installments: 3,
     perInstallmentChf: 113,
-    totalChf: 226,
+    totalChf: 339,
   });
 
   const writeResult = await writeManagedPublicTariffsDocument(
@@ -439,7 +440,7 @@ test("reads and writes a document with an added installment modality", async () 
     assert.equal(
       writeResult.value.tariffs.audiences[0].formulas[1].durations[1].payments
         .length,
-      2,
+      3,
     );
   }
 
@@ -450,16 +451,16 @@ test("reads and writes a document with an added installment modality", async () 
       readResult.value.tariffs.audiences[0].formulas[1].durations[1].payments;
     assert.deepEqual(
       payments.map((payment) => payment.installments),
-      [1, 2],
+      [1, 2, 3],
     );
-    assert.equal(payments[1].perInstallmentChf, 113);
+    assert.equal(payments[2].perInstallmentChf, 113);
   }
 
   assert.equal(
     (
       store.get(MANAGED_PUBLIC_TARIFFS_KV_KEY) as ManagedPublicTariffsDocument
     ).tariffs.audiences[0].formulas[1].durations[1].payments.length,
-    2,
+    3,
   );
 });
 

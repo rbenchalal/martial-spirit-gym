@@ -105,7 +105,7 @@ test("accepts the reference draft document", () => {
   const result = validateManagedPublicTariffsDocument(draft);
   assert.equal(result.ok, true);
   if (result.ok) {
-    assert.equal(countPayments(result.value), 27);
+    assert.equal(countPayments(result.value), 28);
     assert.equal(result.value.tariffs.courseCards.length, 4);
     assert.equal(
       findPayment(
@@ -357,11 +357,11 @@ test("accepts adding a modality that is absent from the fallback", () => {
     "full-access",
     "three-months",
   );
-  assert.equal(duration.payments.length, 1);
+  assert.equal(duration.payments.length, 2);
   duration.payments.push({
-    installments: 2,
+    installments: 3,
     perInstallmentChf: 111,
-    totalChf: 222,
+    totalChf: 333,
   });
 
   const result = validateManagedPublicTariffsDocument(draft);
@@ -373,7 +373,7 @@ test("accepts adding a modality that is absent from the fallback", () => {
         "adults-parent-child",
         "full-access",
         "three-months",
-        2,
+        3,
       ).perInstallmentChf,
       111,
     );
@@ -400,7 +400,7 @@ test("accepts removing a modality when another remains", () => {
   const result = validateManagedPublicTariffsDocument(draft);
   assert.equal(result.ok, true);
   if (result.ok) {
-    assert.equal(countPayments(result.value), 26);
+    assert.equal(countPayments(result.value), 27);
   }
 });
 

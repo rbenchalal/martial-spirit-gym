@@ -98,8 +98,8 @@ test("each formula exposes four durations", () => {
   }
 });
 
-test("defines exactly 27 payment options", () => {
-  assert.equal(allPayments().length, 27);
+test("defines exactly 28 payment options", () => {
+  assert.equal(allPayments().length, 28);
 });
 
 test("adult two-classes payment values", () => {
@@ -129,6 +129,7 @@ test("adult full-access payment values", () => {
   ]);
   assert.deepEqual(payments["three-months"], [
     { installments: 1, perInstallmentChf: 300, totalChf: 300 },
+    { installments: 2, perInstallmentChf: 170, totalChf: 340 },
   ]);
   assert.deepEqual(payments["six-months"], [
     { installments: 1, perInstallmentChf: 520, totalChf: 520 },
@@ -195,7 +196,7 @@ test("every duration includes a one-installment payment", () => {
   }
 });
 
-test("two-installment payments exist only for six months, one year, and adult two-classes three months", () => {
+test("two-installment payments exist only for six months, one year, and adult three-months formulas", () => {
   for (const audience of PUBLIC_TARIFFS.audiences) {
     for (const formula of audience.formulas) {
       for (const duration of formula.durations) {
@@ -206,7 +207,6 @@ test("two-installment payments exist only for six months, one year, and adult tw
           duration.id === "six-months" ||
           duration.id === "one-year" ||
           (audience.id === "adults-parent-child" &&
-            formula.id === "two-classes" &&
             duration.id === "three-months");
         assert.equal(hasTwo, allowed);
       }
@@ -214,14 +214,12 @@ test("two-installment payments exist only for six months, one year, and adult tw
   }
 });
 
-test("full-access three-months never offers a two-installment payment", () => {
-  for (const audience of PUBLIC_TARIFFS.audiences) {
-    const payments = paymentMap(audience.id, "full-access")["three-months"];
-    assert.equal(
-      payments.some((option) => option.installments === 2),
-      false,
-    );
-  }
+test("reduced full-access three-months never offers a two-installment payment", () => {
+  const payments = paymentMap("reduced", "full-access")["three-months"];
+  assert.equal(
+    payments.some((option) => option.installments === 2),
+    false,
+  );
 });
 
 test("reduced three-months never offers a two-installment payment", () => {

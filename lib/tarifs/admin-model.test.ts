@@ -138,7 +138,7 @@ test("creates a local editor from fallback without mutating sources", () => {
   assert.equal(PUBLIC_TARIFFS.audiences[0].formulas[0].durations[3].payments[0].perInstallmentChf, 880);
 });
 
-test("exposes 48 payment keys with 27 filled and 21 empty for the fallback", () => {
+test("exposes 48 payment keys with 28 filled and 20 empty for the fallback", () => {
   const snapshot = structuredClone(PUBLIC_TARIFFS);
   const state = createEditorStateFromGetPayload(getPayload(), FIXED_UPDATED_AT);
   const payments = listPaymentFields(state.structure);
@@ -149,7 +149,7 @@ test("exposes 48 payment keys with 27 filled and 21 empty for the fallback", () 
   assert.equal(MANAGED_PAYMENT_CELL_COUNT, 48);
   assert.equal(Object.keys(state.paymentInputs).length, 48);
   assert.equal(new Set(payments.map((item) => item.key)).size, 48);
-  assert.equal(countFilledPaymentInputs(state.paymentInputs), 27);
+  assert.equal(countFilledPaymentInputs(state.paymentInputs), 28);
   assert.equal(cards.length, 4);
   assert.equal(sections.length, 4);
 
@@ -159,8 +159,15 @@ test("exposes 48 payment keys with 27 filled and 21 empty for the fallback", () 
     "three-months",
     2,
   );
-  assert.equal(state.paymentInputs[adultFullAccessThreeMonths2x], "");
-  assert.equal(isBlankAmountInput(state.paymentInputs[adultFullAccessThreeMonths2x]), true);
+  const adultFullAccessThreeMonths3x = paymentFieldKey(
+    "adults-parent-child",
+    "full-access",
+    "three-months",
+    3,
+  );
+  assert.equal(state.paymentInputs[adultFullAccessThreeMonths2x], "170");
+  assert.equal(state.paymentInputs[adultFullAccessThreeMonths3x], "");
+  assert.equal(isBlankAmountInput(state.paymentInputs[adultFullAccessThreeMonths3x]), true);
   assert.deepEqual(PUBLIC_TARIFFS, snapshot);
 });
 
@@ -241,15 +248,26 @@ test("invalid grids cannot be previewed or saved when a duration has no modality
 test("adds removes and rebuilds sparse payment modalities without inventing zeros", () => {
   const snapshot = structuredClone(PUBLIC_TARIFFS);
   let state = createEditorStateFromGetPayload(getPayload(), FIXED_UPDATED_AT);
-  const adultFullAccessThreeMonths2x = paymentFieldKey(
+  const adultFullAccessThreeMonths3x = paymentFieldKey(
     "adults-parent-child",
     "full-access",
     "three-months",
-    2,
+    3,
   );
-  assert.equal(state.paymentInputs[adultFullAccessThreeMonths2x], "");
+  assert.equal(state.paymentInputs[adultFullAccessThreeMonths3x], "");
+  assert.equal(
+    state.paymentInputs[
+      paymentFieldKey(
+        "adults-parent-child",
+        "full-access",
+        "three-months",
+        2,
+      )
+    ],
+    "170",
+  );
 
-  state = setPaymentInput(state, adultFullAccessThreeMonths2x, "111");
+  state = setPaymentInput(state, adultFullAccessThreeMonths3x, "111");
   assert.equal(isEditorDirty(state), true);
   let built = buildManagedDocumentFromEditor(state);
   assert.equal(built.ok, true);
@@ -258,14 +276,14 @@ test("adds removes and rebuilds sparse payment modalities without inventing zero
       built.document.tariffs.audiences[0].formulas[1].durations[1].payments;
     assert.deepEqual(
       payments.map((payment) => payment.installments),
-      [1, 2],
+      [1, 2, 3],
     );
-    assert.deepEqual(payments[1], {
-      installments: 2,
+    assert.deepEqual(payments[2], {
+      installments: 3,
       perInstallmentChf: 111,
-      totalChf: 222,
+      totalChf: 333,
     });
-    assert.equal(countFilledPaymentInputs(state.paymentInputs), 28);
+    assert.equal(countFilledPaymentInputs(state.paymentInputs), 29);
   }
 
   const removeKey = paymentFieldKey(
@@ -286,7 +304,7 @@ test("adds removes and rebuilds sparse payment modalities without inventing zero
     );
   }
 
-  state = setPaymentInput(state, adultFullAccessThreeMonths2x, "   ");
+  state = setPaymentInput(state, adultFullAccessThreeMonths3x, "   ");
   built = buildManagedDocumentFromEditor(state);
   assert.equal(built.ok, true);
   if (built.ok) {
@@ -294,7 +312,11 @@ test("adds removes and rebuilds sparse payment modalities without inventing zero
       built.document.tariffs.audiences[0].formulas[1].durations[1].payments.map(
         (payment) => payment.installments,
       ),
-      [1],
+      [1, 2],
+    );
+    assert.deepEqual(
+      built.document.tariffs.audiences[0].formulas[1].durations[1].payments[1],
+      { installments: 2, perInstallmentChf: 170, totalChf: 340 },
     );
     assert.equal(
       built.document.tariffs.audiences[0].formulas[1].durations[1].payments.some(
@@ -412,7 +434,7 @@ test("detects dirty state and can reset all 48 payment values", () => {
     "adults-parent-child",
     "full-access",
     "three-months",
-    2,
+    3,
   );
   const baselineEmpty = state.paymentInputs[emptyKey];
   state = setPaymentInput(state, filledKey, "75");
@@ -630,10 +652,23 @@ test("fallback editor keeps the reference adult amounts", () => {
     ],
     "150",
   );
+  assert.equal(
+    state.paymentInputs[
+      paymentFieldKey("adults-parent-child", "full-access", "three-months", 2)
+    ],
+    "170",
+  );
   const preview = getPreviewTariffs(state);
   assert.ok(preview);
   assert.deepEqual(
     preview?.audiences[0].formulas[0].durations[1].payments[1],
     { installments: 2, perInstallmentChf: 150, totalChf: 300 },
+  );
+  assert.deepEqual(
+    preview?.audiences[0].formulas[1].durations[1].payments,
+    [
+      { installments: 1, perInstallmentChf: 300, totalChf: 300 },
+      { installments: 2, perInstallmentChf: 170, totalChf: 340 },
+    ],
   );
 });

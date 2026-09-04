@@ -107,7 +107,10 @@ export const PUBLIC_TARIFFS: PublicTariffs = {
         ]),
         formula("full-access", "Full access", [
           duration("one-month", "1 mois", [payment(1, 120)]),
-          duration("three-months", "3 mois", [payment(1, 300)]),
+          duration("three-months", "3 mois", [
+            payment(1, 300),
+            payment(2, 170),
+          ]),
           duration("six-months", "6 mois", [
             payment(1, 520),
             payment(2, 270),
