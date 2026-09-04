@@ -12,6 +12,7 @@ import {
   applyPutSuccessToEditor,
   areAmountsDirty,
   buildManagedDocumentFromEditor,
+  canSavePublicTariffs,
   canToggleActivation,
   collectFieldErrors,
   courseCardFieldKey,
@@ -26,6 +27,7 @@ import {
   parsePositiveSafeIntegerInput,
   paymentFieldKey,
   resetEditorToBaseline,
+  saveButtonLabel,
   saveWouldUpdatePublicTariffs,
   setPaymentInput,
   setPublicTariffsEnabled,
@@ -238,6 +240,126 @@ test("first save stays disabled and activation requires a stored document", () =
   );
   assert.equal(firstSaveMustStayDisabled(stored), false);
   assert.equal(canToggleActivation(stored), true);
+});
+
+test("allows initial creation without modifying the fallback grid", () => {
+  const snapshot = structuredClone(PUBLIC_TARIFFS);
+  const state = createEditorStateFromGetPayload(getPayload(), FIXED_UPDATED_AT);
+  assert.equal(state.hasStoredDocument, false);
+  assert.equal(isEditorDirty(state), false);
+  assert.equal(Object.keys(collectFieldErrors(state)).length, 0);
+  assert.equal(
+    canSavePublicTariffs({
+      isLoaded: true,
+      isValid: true,
+      isSaving: false,
+      hasStoredDocument: false,
+      isDirty: false,
+    }),
+    true,
+  );
+
+  const built = buildManagedDocumentFromEditor(state);
+  assert.equal(built.ok, true);
+  if (!built.ok) {
+    return;
+  }
+  assert.equal(built.document.revision, 0);
+  assert.equal("publicTariffsEnabled" in built.document, false);
+  assert.deepEqual(built.document.tariffs, snapshot);
+  assert.deepEqual(PUBLIC_TARIFFS, snapshot);
+  assert.equal(saveButtonLabel(state), "Créer la version administrée");
+});
+
+test("refuses invalid or busy initial creation and clean stored documents", () => {
+  assert.equal(
+    canSavePublicTariffs({
+      isLoaded: true,
+      isValid: false,
+      isSaving: false,
+      hasStoredDocument: false,
+      isDirty: false,
+    }),
+    false,
+  );
+  assert.equal(
+    canSavePublicTariffs({
+      isLoaded: true,
+      isValid: true,
+      isSaving: true,
+      hasStoredDocument: false,
+      isDirty: false,
+    }),
+    false,
+  );
+  assert.equal(
+    canSavePublicTariffs({
+      isLoaded: false,
+      isValid: true,
+      isSaving: false,
+      hasStoredDocument: false,
+      isDirty: false,
+    }),
+    false,
+  );
+  assert.equal(
+    canSavePublicTariffs({
+      isLoaded: true,
+      isValid: true,
+      isSaving: false,
+      hasStoredDocument: true,
+      isDirty: false,
+    }),
+    false,
+  );
+  assert.equal(
+    canSavePublicTariffs({
+      isLoaded: true,
+      isValid: true,
+      isSaving: false,
+      hasStoredDocument: true,
+      isDirty: true,
+    }),
+    true,
+  );
+});
+
+test("after initial PUT success the document exists and save requires dirty again", () => {
+  const before = createEditorStateFromGetPayload(getPayload(), FIXED_UPDATED_AT);
+  assert.equal(before.hasStoredDocument, false);
+  assert.equal(isEditorDirty(before), false);
+
+  const document = createManagedPublicTariffsDraft("2026-09-05T10:00:00.000Z");
+  document.revision = 1;
+
+  const next = applyPutSuccessToEditor(before, {
+    document,
+    activeSource: "fallback",
+    message: "Tarifs publics enregistrés.",
+  });
+
+  assert.equal(next.hasStoredDocument, true);
+  assert.equal(next.persistedRevision, 1);
+  assert.equal(isEditorDirty(next), false);
+  assert.equal(next.publicTariffsEnabled, false);
+  assert.equal(canToggleActivation(next), true);
+  assert.equal(
+    canSavePublicTariffs({
+      isLoaded: true,
+      isValid: true,
+      isSaving: false,
+      hasStoredDocument: next.hasStoredDocument,
+      isDirty: isEditorDirty(next),
+    }),
+    false,
+  );
+  assert.equal(saveButtonLabel(next), "Enregistrer");
+  assert.deepEqual(
+    next.structure.audiences[0].formulas[0].durations[0].payments[0]
+      .perInstallmentChf,
+    PUBLIC_TARIFFS.audiences[0].formulas[0].durations[0].payments[0]
+      .perInstallmentChf,
+  );
 });
 
 test("requires confirmation only when enabling activation", () => {

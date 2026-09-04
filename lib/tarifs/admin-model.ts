@@ -582,6 +582,27 @@ export function firstSaveMustStayDisabled(
   return !state.hasStoredDocument;
 }
 
+export type CanSavePublicTariffsInput = {
+  isLoaded: boolean;
+  isValid: boolean;
+  isSaving: boolean;
+  hasStoredDocument: boolean;
+  isDirty: boolean;
+};
+
+/**
+ * Initial creation may save an unchanged fallback grid.
+ * Later saves require a dirty form.
+ */
+export function canSavePublicTariffs(
+  input: CanSavePublicTariffsInput,
+): boolean {
+  if (!input.isLoaded || !input.isValid || input.isSaving) {
+    return false;
+  }
+  return !input.hasStoredDocument || input.isDirty;
+}
+
 export function saveButtonLabel(state: PublicTariffsAdminEditorState): string {
   return state.hasStoredDocument
     ? "Enregistrer"

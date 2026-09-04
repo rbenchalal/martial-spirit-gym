@@ -10,6 +10,7 @@ import {
   activationToggleRequiresConfirm,
   applyPutSuccessToEditor,
   buildManagedDocumentFromEditor,
+  canSavePublicTariffs,
   canToggleActivation,
   collectFieldErrors,
   computePaymentTotalLabel,
@@ -183,7 +184,19 @@ export default function PublicTariffsAdminApp() {
   };
 
   const handleSave = async () => {
-    if (!editor || isSaving || loadStatus !== "ready") {
+    if (!editor || isSaving || loadStatus !== "ready" || sessionExpired) {
+      return;
+    }
+
+    if (
+      !canSavePublicTariffs({
+        isLoaded: true,
+        isValid: !hasFieldErrors,
+        isSaving: false,
+        hasStoredDocument: editor.hasStoredDocument,
+        isDirty: dirty,
+      })
+    ) {
       return;
     }
 
@@ -264,11 +277,14 @@ export default function PublicTariffsAdminApp() {
 
   const saveDisabled =
     !editor ||
-    isSaving ||
-    loadStatus !== "ready" ||
-    !dirty ||
-    hasFieldErrors ||
-    sessionExpired;
+    sessionExpired ||
+    !canSavePublicTariffs({
+      isLoaded: loadStatus === "ready",
+      isValid: !hasFieldErrors,
+      isSaving,
+      hasStoredDocument: editor.hasStoredDocument,
+      isDirty: dirty,
+    });
 
   return (
     <main className="min-h-screen bg-black text-white">
