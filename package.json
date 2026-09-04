@@ -24,7 +24,9 @@
     "test:public-documents-admin-view": "node --test lib/public-documents/admin-view-model.test.ts",
     "test:tarifs": "node --test lib/tarifs/public-tarifs.test.ts",
     "test:tarifs-managed": "node --test lib/tarifs/managed-validation.test.ts",
-    "test:tarifs-store": "node --test lib/tarifs/managed-store.test.ts"
+    "test:tarifs-store": "node --test lib/tarifs/managed-store.test.ts",
+    "test:tarifs-admin": "node --test lib/tarifs/admin-http.test.ts",
+    "test:tarifs-resolve": "node --test lib/tarifs/resolve.test.ts"
   },
   "dependencies": {
     "@vercel/blob": "^2.3.1",
