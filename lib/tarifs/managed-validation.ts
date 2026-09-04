@@ -8,6 +8,10 @@ import {
   type PublicTariffs,
 } from "./public-tarifs.ts";
 import type { ManagedPublicTariffsDocument } from "./managed-types.ts";
+import {
+  isManagedPaymentInstallments,
+  type ManagedPaymentInstallments,
+} from "./managed-matrix.ts";
 
 export type ManagedPublicTariffsValidationIssue = {
   path: string;
@@ -125,7 +129,6 @@ function validatePayment(
   issues: ManagedPublicTariffsValidationIssue[],
   path: string,
   value: unknown,
-  expected: PublicTariffPayment,
 ): PublicTariffPayment | null {
   if (!isPlainObject(value)) {
     pushIssue(issues, path, "invalid_type", "Payment must be a plain object.");
@@ -134,16 +137,16 @@ function validatePayment(
 
   rejectUnknownKeys(issues, path, value, PAYMENT_ALLOWED_KEYS);
 
-  if (value.installments !== expected.installments) {
+  if (!isManagedPaymentInstallments(value.installments)) {
     pushIssue(
       issues,
       `${path}.installments`,
-      "fixed_mismatch",
-      `installments must be exactly ${expected.installments}.`,
+      "invalid_installments",
+      "installments must be exactly 1, 2, or 3.",
     );
   }
 
-  const installmentsOk = value.installments === expected.installments;
+  const installmentsOk = isManagedPaymentInstallments(value.installments);
   const perInstallmentChf = value.perInstallmentChf;
   const totalChf = value.totalChf;
   const perOk = isPositiveSafeInteger(perInstallmentChf);
@@ -168,7 +171,8 @@ function validatePayment(
   }
 
   if (installmentsOk && perOk && totalOk) {
-    const expectedTotal = expected.installments * perInstallmentChf;
+    const installments = value.installments as ManagedPaymentInstallments;
+    const expectedTotal = installments * perInstallmentChf;
     if (totalChf !== expectedTotal) {
       pushIssue(
         issues,
@@ -180,7 +184,7 @@ function validatePayment(
     }
 
     return {
-      installments: expected.installments,
+      installments,
       perInstallmentChf,
       totalChf,
     };
@@ -230,34 +234,64 @@ function validateDuration(
     return null;
   }
 
-  if (value.payments.length !== expected.payments.length) {
+  if (value.payments.length === 0) {
     pushIssue(
       issues,
       `${path}.payments`,
-      "matrix_mismatch",
-      `payments must contain exactly ${expected.payments.length} option(s).`,
+      "empty_payments",
+      "payments must contain at least one installment modality.",
     );
   }
 
   const payments: PublicTariffPayment[] = [];
-  const length = Math.min(value.payments.length, expected.payments.length);
-  for (let index = 0; index < length; index += 1) {
+  for (let index = 0; index < value.payments.length; index += 1) {
     const payment = validatePayment(
       issues,
       `${path}.payments[${index}]`,
       value.payments[index],
-      expected.payments[index],
     );
     if (payment) {
       payments.push(payment);
     }
   }
 
+  const seen = new Set<number>();
+  let previousInstallments = 0;
+  let orderOk = true;
+  let duplicatesOk = true;
+
+  for (let index = 0; index < payments.length; index += 1) {
+    const installments = payments[index].installments;
+    if (seen.has(installments)) {
+      duplicatesOk = false;
+      pushIssue(
+        issues,
+        `${path}.payments[${index}].installments`,
+        "duplicate_installments",
+        "Each installment modality may appear at most once.",
+      );
+    }
+    seen.add(installments);
+
+    if (installments <= previousInstallments) {
+      orderOk = false;
+      pushIssue(
+        issues,
+        `${path}.payments`,
+        "payments_order",
+        "payments must be ordered by ascending installments (1, then 2, then 3).",
+      );
+    }
+    previousInstallments = installments;
+  }
+
   if (
     value.id !== expected.id ||
     value.label !== expected.label ||
-    value.payments.length !== expected.payments.length ||
-    payments.length !== expected.payments.length
+    value.payments.length === 0 ||
+    payments.length !== value.payments.length ||
+    !duplicatesOk ||
+    !orderOk
   ) {
     return null;
   }
@@ -658,8 +692,9 @@ function validateTariffs(
 
 /**
  * Pure validator for managed public tariffs documents.
- * Accepts only the fixed PUBLIC_TARIFFS matrix; amounts may differ.
- * Never mutates the input or PUBLIC_TARIFFS.
+ * Structure (currency, audiences, formulas, durations, cards) is fixed.
+ * Each duration may offer any non-empty subset of modalities 1/2/3 in
+ * ascending order; amounts may differ. Never mutates the input or PUBLIC_TARIFFS.
  */
 export function validateManagedPublicTariffsDocument(
   value: unknown,

@@ -416,3 +416,82 @@ test("never touches legacy pricing keys", async () => {
   assert.deepEqual(store.get(LEGACY_PRICING_CARDS_KEY), { legacy: true });
   assert.deepEqual(store.get(OTHER_KV_KEY), { other: true });
 });
+
+test("reads and writes a document with an added installment modality", async () => {
+  const { client, store } = createFakeKv();
+  const document = validDraft({ revision: 0 });
+  const duration =
+    document.tariffs.audiences[0].formulas[1].durations[1];
+  assert.equal(duration.id, "three-months");
+  duration.payments.push({
+    installments: 2,
+    perInstallmentChf: 113,
+    totalChf: 226,
+  });
+
+  const writeResult = await writeManagedPublicTariffsDocument(
+    document,
+    { expectedRevision: 0 },
+    client,
+  );
+  assert.equal(writeResult.ok, true);
+  if (writeResult.ok) {
+    assert.equal(
+      writeResult.value.tariffs.audiences[0].formulas[1].durations[1].payments
+        .length,
+      2,
+    );
+  }
+
+  const readResult = await readManagedPublicTariffsDocument(client);
+  assert.equal(readResult.ok, true);
+  if (readResult.ok) {
+    const payments =
+      readResult.value.tariffs.audiences[0].formulas[1].durations[1].payments;
+    assert.deepEqual(
+      payments.map((payment) => payment.installments),
+      [1, 2],
+    );
+    assert.equal(payments[1].perInstallmentChf, 113);
+  }
+
+  assert.equal(
+    (
+      store.get(MANAGED_PUBLIC_TARIFFS_KV_KEY) as ManagedPublicTariffsDocument
+    ).tariffs.audiences[0].formulas[1].durations[1].payments.length,
+    2,
+  );
+});
+
+test("reads and writes a document with a removed installment modality", async () => {
+  const { client } = createFakeKv();
+  const document = validDraft({ revision: 0 });
+  const duration =
+    document.tariffs.audiences[0].formulas[0].durations[3];
+  assert.equal(duration.id, "one-year");
+  duration.payments = duration.payments.filter(
+    (payment) => payment.installments !== 3,
+  );
+  assert.deepEqual(
+    duration.payments.map((payment) => payment.installments),
+    [1, 2],
+  );
+
+  const writeResult = await writeManagedPublicTariffsDocument(
+    document,
+    { expectedRevision: 0 },
+    client,
+  );
+  assert.equal(writeResult.ok, true);
+
+  const readResult = await readManagedPublicTariffsDocument(client);
+  assert.equal(readResult.ok, true);
+  if (readResult.ok) {
+    assert.deepEqual(
+      readResult.value.tariffs.audiences[0].formulas[0].durations[3].payments.map(
+        (payment) => payment.installments,
+      ),
+      [1, 2],
+    );
+  }
+});

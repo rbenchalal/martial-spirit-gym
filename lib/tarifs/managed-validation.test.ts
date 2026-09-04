@@ -2,12 +2,19 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
   PUBLIC_TARIFFS,
+  type PublicTariffDuration,
   type PublicTariffPayment,
 } from "./public-tarifs.ts";
 import {
   createManagedPublicTariffsDraft,
   type ManagedPublicTariffsDocument,
 } from "./managed-types.ts";
+import {
+  MANAGED_PAYMENT_CELL_COUNT,
+  MANAGED_PAYMENT_INSTALLMENTS,
+  listManagedPaymentCells,
+  managedPaymentCellKey,
+} from "./managed-matrix.ts";
 import { validateManagedPublicTariffsDocument } from "./managed-validation.ts";
 
 const FIXED_UPDATED_AT = "2026-09-04T18:00:00.000Z";
@@ -19,13 +26,12 @@ function countPayments(document: ManagedPublicTariffsDocument): number {
     .flatMap((duration) => duration.payments).length;
 }
 
-function findPayment(
+function findDuration(
   document: ManagedPublicTariffsDocument,
   audienceId: "adults-parent-child" | "reduced",
   formulaId: "two-classes" | "full-access",
   durationId: "one-month" | "three-months" | "six-months" | "one-year",
-  installments: 1 | 2 | 3,
-): PublicTariffPayment {
+): PublicTariffDuration {
   const audience = document.tariffs.audiences.find(
     (item) => item.id === audienceId,
   );
@@ -34,6 +40,22 @@ function findPayment(
   assert.ok(formula);
   const duration = formula.durations.find((item) => item.id === durationId);
   assert.ok(duration);
+  return duration;
+}
+
+function findPayment(
+  document: ManagedPublicTariffsDocument,
+  audienceId: "adults-parent-child" | "reduced",
+  formulaId: "two-classes" | "full-access",
+  durationId: "one-month" | "three-months" | "six-months" | "one-year",
+  installments: 1 | 2 | 3,
+): PublicTariffPayment {
+  const duration = findDuration(
+    document,
+    audienceId,
+    formulaId,
+    durationId,
+  );
   const payment = duration.payments.find(
     (item) => item.installments === installments,
   );
@@ -291,32 +313,218 @@ test("accepts amount changes with a correct total", () => {
   }
 });
 
-test("rejects missing or extra payment options", () => {
-  const missing = createManagedPublicTariffsDraft(FIXED_UPDATED_AT);
-  missing.tariffs.audiences[0].formulas[0].durations[3].payments.pop();
-  assert.equal(validateManagedPublicTariffsDocument(missing).ok, false);
+test("canonical managed payment matrix exposes 48 unique cells", () => {
+  const snapshot = structuredClone(PUBLIC_TARIFFS);
+  const cells = listManagedPaymentCells();
+  assert.equal(cells.length, 48);
+  assert.equal(MANAGED_PAYMENT_CELL_COUNT, 48);
+  assert.deepEqual([...MANAGED_PAYMENT_INSTALLMENTS], [1, 2, 3]);
+  assert.equal(new Set(cells.map((cell) => cell.key)).size, 48);
 
-  const extra = createManagedPublicTariffsDraft(FIXED_UPDATED_AT);
-  extra.tariffs.audiences[1].formulas[0].durations[0].payments.push({
-    installments: 2,
-    perInstallmentChf: 40,
-    totalChf: 80,
-  });
-  assert.equal(validateManagedPublicTariffsDocument(extra).ok, false);
+  for (const audience of PUBLIC_TARIFFS.audiences) {
+    for (const formula of audience.formulas) {
+      for (const duration of formula.durations) {
+        for (const installments of MANAGED_PAYMENT_INSTALLMENTS) {
+          assert.ok(
+            cells.some(
+              (cell) =>
+                cell.audienceId === audience.id &&
+                cell.formulaId === formula.id &&
+                cell.durationId === duration.id &&
+                cell.installments === installments &&
+                cell.key ===
+                  managedPaymentCellKey(
+                    audience.id,
+                    formula.id,
+                    duration.id,
+                    installments,
+                  ),
+            ),
+          );
+        }
+      }
+    }
+  }
+
+  assert.deepEqual(PUBLIC_TARIFFS, snapshot);
 });
 
-test("rejects a modified installment number", () => {
+test("accepts adding a modality that is absent from the fallback", () => {
   const draft = createManagedPublicTariffsDraft(FIXED_UPDATED_AT);
-  const payment = findPayment(
+  const duration = findDuration(
+    draft,
+    "adults-parent-child",
+    "full-access",
+    "three-months",
+  );
+  assert.equal(duration.payments.length, 1);
+  duration.payments.push({
+    installments: 2,
+    perInstallmentChf: 111,
+    totalChf: 222,
+  });
+
+  const result = validateManagedPublicTariffsDocument(draft);
+  assert.equal(result.ok, true);
+  if (result.ok) {
+    assert.equal(
+      findPayment(
+        result.value,
+        "adults-parent-child",
+        "full-access",
+        "three-months",
+        2,
+      ).perInstallmentChf,
+      111,
+    );
+  }
+});
+
+test("accepts removing a modality when another remains", () => {
+  const draft = createManagedPublicTariffsDraft(FIXED_UPDATED_AT);
+  const duration = findDuration(
+    draft,
+    "adults-parent-child",
+    "two-classes",
+    "one-year",
+  );
+  assert.equal(duration.payments.length, 3);
+  duration.payments = duration.payments.filter(
+    (payment) => payment.installments !== 2,
+  );
+  assert.deepEqual(
+    duration.payments.map((payment) => payment.installments),
+    [1, 3],
+  );
+
+  const result = validateManagedPublicTariffsDocument(draft);
+  assert.equal(result.ok, true);
+  if (result.ok) {
+    assert.equal(countPayments(result.value), 26);
+  }
+});
+
+test("accepts a single modality of 1, 2, or 3", () => {
+  for (const installments of [1, 2, 3] as const) {
+    const draft = createManagedPublicTariffsDraft(FIXED_UPDATED_AT);
+    const duration = findDuration(
+      draft,
+      "reduced",
+      "two-classes",
+      "one-month",
+    );
+    duration.payments = [
+      {
+        installments,
+        perInstallmentChf: 55,
+        totalChf: installments * 55,
+      },
+    ];
+    assert.equal(validateManagedPublicTariffsDocument(draft).ok, true);
+  }
+});
+
+test("rejects an empty payments array", () => {
+  const draft = createManagedPublicTariffsDraft(FIXED_UPDATED_AT);
+  findDuration(
     draft,
     "adults-parent-child",
     "two-classes",
     "one-month",
-    1,
-  );
-  (payment as { installments: number }).installments = 2;
-  payment.totalChf = 2 * payment.perInstallmentChf;
+  ).payments = [];
   assert.equal(validateManagedPublicTariffsDocument(draft).ok, false);
+});
+
+test("rejects installment 4 or 0", () => {
+  const four = createManagedPublicTariffsDraft(FIXED_UPDATED_AT);
+  (
+    findDuration(four, "adults-parent-child", "two-classes", "one-month")
+      .payments[0] as { installments: number }
+  ).installments = 4;
+  four.tariffs.audiences[0].formulas[0].durations[0].payments[0].totalChf =
+    4 *
+    four.tariffs.audiences[0].formulas[0].durations[0].payments[0]
+      .perInstallmentChf;
+  assert.equal(validateManagedPublicTariffsDocument(four).ok, false);
+
+  const zero = createManagedPublicTariffsDraft(FIXED_UPDATED_AT);
+  (
+    findDuration(zero, "adults-parent-child", "two-classes", "one-month")
+      .payments[0] as { installments: number }
+  ).installments = 0;
+  assert.equal(validateManagedPublicTariffsDocument(zero).ok, false);
+});
+
+test("rejects duplicate installment modalities", () => {
+  const draft = createManagedPublicTariffsDraft(FIXED_UPDATED_AT);
+  const duration = findDuration(
+    draft,
+    "adults-parent-child",
+    "two-classes",
+    "one-month",
+  );
+  duration.payments = [
+    { installments: 1, perInstallmentChf: 100, totalChf: 100 },
+    { installments: 1, perInstallmentChf: 90, totalChf: 90 },
+  ];
+  assert.equal(validateManagedPublicTariffsDocument(draft).ok, false);
+});
+
+test("rejects payments ordered as 2 then 1", () => {
+  const draft = createManagedPublicTariffsDraft(FIXED_UPDATED_AT);
+  const duration = findDuration(
+    draft,
+    "adults-parent-child",
+    "two-classes",
+    "three-months",
+  );
+  duration.payments = [
+    { installments: 2, perInstallmentChf: 150, totalChf: 300 },
+    { installments: 1, perInstallmentChf: 260, totalChf: 260 },
+  ];
+  assert.equal(validateManagedPublicTariffsDocument(draft).ok, false);
+});
+
+test("accepts the theoretical minimum of 16 payments", () => {
+  const draft = createManagedPublicTariffsDraft(FIXED_UPDATED_AT);
+  for (const audience of draft.tariffs.audiences) {
+    for (const formula of audience.formulas) {
+      for (const duration of formula.durations) {
+        duration.payments = [
+          {
+            installments: 1,
+            perInstallmentChf: 42,
+            totalChf: 42,
+          },
+        ];
+      }
+    }
+  }
+  const result = validateManagedPublicTariffsDocument(draft);
+  assert.equal(result.ok, true);
+  if (result.ok) {
+    assert.equal(countPayments(result.value), 16);
+  }
+});
+
+test("accepts the theoretical maximum of 48 payments", () => {
+  const draft = createManagedPublicTariffsDraft(FIXED_UPDATED_AT);
+  for (const audience of draft.tariffs.audiences) {
+    for (const formula of audience.formulas) {
+      for (const duration of formula.durations) {
+        duration.payments = [
+          { installments: 1, perInstallmentChf: 10, totalChf: 10 },
+          { installments: 2, perInstallmentChf: 11, totalChf: 22 },
+          { installments: 3, perInstallmentChf: 12, totalChf: 36 },
+        ];
+      }
+    }
+  }
+  const result = validateManagedPublicTariffsDocument(draft);
+  assert.equal(result.ok, true);
+  if (result.ok) {
+    assert.equal(countPayments(result.value), 48);
+  }
 });
 
 test("rejects an incorrect total without correcting it", () => {
