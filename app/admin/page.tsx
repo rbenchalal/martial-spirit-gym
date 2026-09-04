@@ -981,6 +981,12 @@ export default function AdminPage() {
             >
               Documents publics
             </a>
+            <a
+              href="/admin/tarifs"
+              className="inline-flex items-center rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-2 text-sm font-medium text-red-200 transition hover:bg-red-500/20"
+            >
+              Tarifs publics
+            </a>
           </p>
         </header>
 
