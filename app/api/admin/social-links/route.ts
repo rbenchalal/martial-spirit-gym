@@ -5,6 +5,7 @@ import {
   writeEditableSocialLinks,
   type EditableSocialLink,
 } from "@/lib/editable-social-links-store";
+import { handleGetAdminSocialLinks } from "@/lib/social-links/http";
 
 type ErrorBody = { error: string };
 
@@ -35,14 +36,11 @@ function hasRequiredContent(value: EditableSocialLink) {
   );
 }
 
-export async function GET() {
-  try {
-    const socialLinks = await readEditableSocialLinks();
-    return NextResponse.json({ socialLinks });
-  } catch (error) {
-    console.error("Failed to read social links", error);
-    return jsonError("Impossible de recuperer les reseaux sociaux.", 500);
-  }
+export async function GET(request: Request): Promise<Response> {
+  return handleGetAdminSocialLinks({
+    requireAdmin: async () => requireAdminSession(request) === null,
+    readSocialLinks: () => readEditableSocialLinks(),
+  });
 }
 
 export async function POST(request: Request) {

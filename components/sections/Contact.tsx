@@ -85,7 +85,7 @@ export default function Contact() {
   useEffect(() => {
     const loadSocialLinks = async () => {
       try {
-        const response = await fetch("/api/admin/social-links");
+        const response = await fetch("/api/public/social-links");
         const data = (await response.json()) as {
           socialLinks?: EditableSocialLink[] | null;
         };
