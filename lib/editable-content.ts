@@ -23,24 +23,6 @@ export const editableContent = {
       ariaLabel: "Ouvrir le Facebook de Martial Spirit Gym",
     },
   ],
-  schedule: [
-    {
-      title: "Boxe Thaïlandaise - Kids (8+)",
-      slots: ["Lundi : 17h30 - 18h45", "Mercredi : 16h30 - 17h45"],
-    },
-    {
-      title: "Boxe Thaïlandaise - Adultes",
-      slots: ["Lundi : 19h00 - 20h30", "Vendredi : 18h30 - 20h00"],
-    },
-    {
-      title: "MMA - Kids",
-      slots: ["Samedi : 15h00 - 16h15"],
-    },
-    {
-      title: "MMA - Adultes",
-      slots: ["Samedi : 16h30 - 18h00"],
-    },
-  ],
   conditioning: {
     title: "Martial Spirit Conditioning",
     description:

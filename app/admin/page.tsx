@@ -37,11 +37,6 @@ type EditableConditioning = {
   description: string;
 };
 
-type EditableScheduleSession = {
-  title: string;
-  slots: string[];
-};
-
 type EditableSocialLink = {
   platform: string;
   label: string;
@@ -69,11 +64,6 @@ const fallbackConditioning: EditableConditioning = {
   title: editableContent.conditioning.title,
   description: editableContent.conditioning.description,
 };
-
-const fallbackSchedule: EditableScheduleSession[] = editableContent.schedule.map((session) => ({
-  title: session.title,
-  slots: [...session.slots],
-}));
 
 const fallbackSocialLinks: EditableSocialLink[] = editableContent.socialLinks.map((link) => ({
   platform: link.platform,
@@ -159,11 +149,6 @@ export default function AdminPage() {
     useState<string | null>(null);
   const [conditioningErrorMessage, setConditioningErrorMessage] =
     useState<string | null>(null);
-  const [scheduleSessionsInput, setScheduleSessionsInput] =
-    useState<EditableScheduleSession[]>(fallbackSchedule);
-  const [isSavingSchedule, setIsSavingSchedule] = useState(false);
-  const [scheduleStatusMessage, setScheduleStatusMessage] = useState<string | null>(null);
-  const [scheduleErrorMessage, setScheduleErrorMessage] = useState<string | null>(null);
   const [socialLinksInput, setSocialLinksInput] =
     useState<EditableSocialLink[]>(fallbackSocialLinks);
   const [isSavingSocialLinks, setIsSavingSocialLinks] = useState(false);
@@ -282,37 +267,6 @@ export default function AdminPage() {
     }
   };
 
-  const loadSchedule = async () => {
-    setScheduleErrorMessage(null);
-    try {
-      const response = await fetch("/api/admin/schedule");
-      const data = (await response.json()) as {
-        schedule?: EditableScheduleSession[] | null;
-        error?: string;
-      };
-
-      if (!response.ok) {
-        throw new Error(data.error ?? "Impossible de charger les donnees Planning.");
-      }
-
-      const nextSchedule =
-        Array.isArray(data.schedule) && data.schedule.length > 0
-          ? data.schedule
-          : fallbackSchedule;
-      setScheduleSessionsInput(
-        nextSchedule.map((session) => ({
-          title: session.title || "",
-          slots: Array.isArray(session.slots) ? session.slots : [],
-        })),
-      );
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Impossible de charger les donnees Planning.";
-      setScheduleErrorMessage(message);
-      setScheduleSessionsInput(fallbackSchedule);
-    }
-  };
-
   const loadSocialLinks = async () => {
     setSocialLinksErrorMessage(null);
     try {
@@ -397,7 +351,6 @@ export default function AdminPage() {
     void loadHero();
     void loadContact();
     void loadConditioning();
-    void loadSchedule();
     void loadSocialLinks();
     void loadGallery();
     void loadFeaturedVideo();
@@ -706,82 +659,6 @@ export default function AdminPage() {
       setConditioningErrorMessage(message);
     } finally {
       setIsSavingConditioning(false);
-    }
-  };
-
-  const handleScheduleSessionChange = (
-    index: number,
-    field: "title" | "slots",
-    value: string,
-  ) => {
-    setScheduleSessionsInput((previous) =>
-      previous.map((session, sessionIndex) => {
-        if (sessionIndex !== index) {
-          return session;
-        }
-
-        if (field === "title") {
-          return {
-            ...session,
-            title: value,
-          };
-        }
-
-        const slots = value
-          .split("\n")
-          .map((slot) => slot.trim())
-          .filter(Boolean);
-
-        return {
-          ...session,
-          slots,
-        };
-      }),
-    );
-  };
-
-  const handleSaveSchedule = async () => {
-    setIsSavingSchedule(true);
-    setScheduleErrorMessage(null);
-    setScheduleStatusMessage(null);
-
-    try {
-      const response = await fetch("/api/admin/schedule", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          schedule: scheduleSessionsInput,
-        }),
-      });
-
-      const data = (await response.json()) as {
-        schedule?: EditableScheduleSession[];
-        message?: string;
-        error?: string;
-      };
-
-      if (!response.ok) {
-        throw new Error(data.error ?? "Erreur pendant la mise a jour du Planning.");
-      }
-
-      if (Array.isArray(data.schedule)) {
-        setScheduleSessionsInput(
-          data.schedule.map((session) => ({
-            title: session.title,
-            slots: [...session.slots],
-          })),
-        );
-      }
-
-      setScheduleStatusMessage(data.message ?? "Planning enregistre.");
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Erreur pendant la mise a jour du Planning.";
-      setScheduleErrorMessage(message);
-    } finally {
-      setIsSavingSchedule(false);
     }
   };
 
@@ -1163,65 +1040,6 @@ export default function AdminPage() {
               {socialLinksErrorMessage ? (
                 <p className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-200">
                   {socialLinksErrorMessage}
-                </p>
-              ) : null}
-            </div>
-          </section>
-
-          <section className="rounded-2xl border border-white/10 bg-zinc-950/70 p-6">
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-xl font-semibold">Planning</h2>
-              <button
-                type="button"
-                onClick={() => void handleSaveSchedule()}
-                disabled={isSavingSchedule}
-                className="rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-2 text-sm font-medium text-red-200 transition hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                Enregistrer le Planning
-              </button>
-            </div>
-            <div className="space-y-4">
-              {scheduleSessionsInput.map((entry, index) => (
-                <div
-                  key={`${entry.title}-${index}`}
-                  className="rounded-xl border border-white/10 bg-black/40 p-4"
-                >
-                  <label className="mb-3 block">
-                    <span className="mb-2 block text-sm font-medium text-zinc-200">
-                      Intitule
-                    </span>
-                    <input
-                      type="text"
-                      value={entry.title}
-                      onChange={(event) =>
-                        handleScheduleSessionChange(index, "title", event.target.value)
-                      }
-                      className="w-full rounded-lg border border-white/10 bg-black/60 px-3 py-2 text-sm text-white outline-none ring-red-500/40 focus:ring-2"
-                    />
-                  </label>
-                  <label className="block">
-                    <span className="mb-2 block text-sm font-medium text-zinc-200">
-                      Creneaux (un par ligne)
-                    </span>
-                    <textarea
-                      value={entry.slots.join("\n")}
-                      onChange={(event) =>
-                        handleScheduleSessionChange(index, "slots", event.target.value)
-                      }
-                      rows={3}
-                      className="w-full rounded-lg border border-white/10 bg-black/60 px-3 py-2 text-sm text-white outline-none ring-red-500/40 focus:ring-2"
-                    />
-                  </label>
-                </div>
-              ))}
-              {scheduleStatusMessage ? (
-                <p className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-200">
-                  {scheduleStatusMessage}
-                </p>
-              ) : null}
-              {scheduleErrorMessage ? (
-                <p className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-200">
-                  {scheduleErrorMessage}
                 </p>
               ) : null}
             </div>

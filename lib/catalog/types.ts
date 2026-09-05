@@ -169,7 +169,7 @@ export type CatalogDocument = {
   updatedAt: string;
   /**
    * When strictly `true`, the public catalog schedule may be exposed.
-   * Absent or `false` means the public route must keep the legacy fallback.
+   * Absent or `false` means the public route returns `source: "none"`.
    */
   publicScheduleEnabled?: boolean;
   categories: ActivityCategory[];
@@ -178,13 +178,4 @@ export type CatalogDocument = {
   segments: AudienceSegment[];
   coaches: Coach[];
   slots: ScheduleSlot[];
-};
-
-/**
- * Shape of the current textual schedule (admin:schedule).
- * Do not parse this into the structured catalogue schedule.
- */
-export type LegacyScheduleSession = {
-  title: string;
-  slots: string[];
 };

@@ -4,114 +4,34 @@ import { useEffect, useState } from "react";
 import Container from "@/components/ui/Container";
 import SectionTitle from "@/components/ui/SectionTitle";
 import { siteData } from "@/lib/data";
+import { loadPublicScheduleView } from "@/lib/catalog/public-schedule-view";
 import {
-  loadPublicScheduleView,
-  type PublicScheduleView,
-} from "@/lib/catalog/public-schedule-view";
+  resolvePublicScheduleSection,
+  type PublicScheduleSectionState,
+} from "@/lib/catalog/public-schedule-section";
 import { PublicScheduleViewDisplay } from "@/components/catalog/PublicScheduleViewDisplay";
 
-type EditableScheduleSession = {
-  title: string;
-  slots: string[];
-};
-
-type ScheduleDisplay =
-  | {
-      source: "legacy";
-      sessions: EditableScheduleSession[];
-    }
-  | {
-      source: "catalog";
-      view: PublicScheduleView;
-    };
-
-const fallbackSchedule: EditableScheduleSession[] = siteData.schedule.map((session) => ({
-  title: session.title,
-  slots: [...session.slots],
-}));
-
-const initialDisplay: ScheduleDisplay = {
-  source: "legacy",
-  sessions: fallbackSchedule,
-};
-
-function normalizeLegacySessions(
-  value: unknown,
-): EditableScheduleSession[] | null {
-  if (!Array.isArray(value) || value.length === 0) {
-    return null;
-  }
-
-  const sessions = value.map((session) => {
-    if (!session || typeof session !== "object") {
-      return { title: "", slots: [] as string[] };
-    }
-
-    const candidate = session as Partial<EditableScheduleSession>;
-    return {
-      title: typeof candidate.title === "string" ? candidate.title : "",
-      slots: Array.isArray(candidate.slots)
-        ? candidate.slots.filter((slot): slot is string => typeof slot === "string")
-        : [],
-    };
-  });
-
-  return sessions.length > 0 ? sessions : null;
-}
-
-async function loadLegacySchedule(
-  signal: AbortSignal,
-): Promise<EditableScheduleSession[] | null> {
-  try {
-    const response = await fetch("/api/admin/schedule", { signal });
-    const data = (await response.json()) as {
-      schedule?: EditableScheduleSession[] | null;
-    };
-
-    if (!response.ok) {
-      return null;
-    }
-
-    return normalizeLegacySessions(data.schedule);
-  } catch {
-    return null;
-  }
-}
-
 export default function Schedule() {
-  const [display, setDisplay] = useState<ScheduleDisplay>(initialDisplay);
+  const [state, setState] = useState<PublicScheduleSectionState>({
+    status: "loading",
+  });
 
   useEffect(() => {
     const controller = new AbortController();
     const { signal } = controller;
 
-    void Promise.all([
-      loadPublicScheduleView(fetch, signal),
-      loadLegacySchedule(signal),
-    ]).then(([catalogView, legacySessions]) => {
+    void loadPublicScheduleView(fetch, signal).then((view) => {
       if (signal.aborted) {
         return;
       }
 
-      if (catalogView !== null) {
-        setDisplay({ source: "catalog", view: catalogView });
-        return;
-      }
-
-      if (legacySessions !== null) {
-        setDisplay({ source: "legacy", sessions: legacySessions });
-      }
+      setState(resolvePublicScheduleSection(view));
     });
 
     return () => {
       controller.abort();
     };
   }, []);
-
-  const getAudienceLabel = (title: string) =>
-    title.includes("Kids") ? "Kids" : "Adultes";
-  const getDisciplineLabel = (title: string) =>
-    title.includes("MMA") ? "MMA" : "Boxe Thaïlandaise";
 
   return (
     <section id="planning" className="border-b border-white/10 py-20">
@@ -122,43 +42,38 @@ export default function Schedule() {
           description="Planning hebdomadaire actuel pour la boxe thaïlandaise et le MMA."
         />
 
-        {display.source === "catalog" ? (
-          <PublicScheduleViewDisplay view={display.view} />
+        {state.status === "catalog" ? (
+          <PublicScheduleViewDisplay view={state.view} />
         ) : (
-          <div className="mt-10 grid gap-6 md:grid-cols-2">
-            {display.sessions.map((item) => (
-              <article
-                key={item.title}
-                className="rounded-2xl border border-white/10 bg-gradient-to-b from-zinc-900 to-black p-6 shadow-[0_14px_34px_rgba(0,0,0,0.35)]"
-              >
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="rounded-full border border-red-500/35 bg-red-500/15 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-red-200">
-                    {getDisciplineLabel(item.title)}
-                  </span>
-                  <span className="rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-zinc-200">
-                    {getAudienceLabel(item.title)}
-                  </span>
-                </div>
-
-                <h3 className="mt-4 text-xl font-semibold text-white">{item.title}</h3>
-
-                <ul className="mt-5 space-y-3">
-                  {item.slots.map((slot) => (
-                    <li
-                      key={slot}
-                      className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3"
-                    >
-                      <span className="text-sm font-medium text-zinc-300">
-                        {slot.split(" : ")[0]}
-                      </span>
-                      <span className="text-base font-semibold text-white">
-                        {slot.split(" : ")[1]}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </article>
-            ))}
+          <div
+            className="mt-10 rounded-2xl border border-white/10 bg-zinc-900/80 p-6 sm:p-8"
+            role="status"
+            aria-live="polite"
+          >
+            {state.status === "loading" ? (
+              <p className="text-base leading-7 text-zinc-300">
+                Chargement du planning…
+              </p>
+            ) : (
+              <>
+                <h3 className="text-xl font-semibold text-white">
+                  Planning momentanément indisponible
+                </h3>
+                <p className="mt-3 max-w-2xl leading-7 text-zinc-300">
+                  Les horaires ne peuvent pas être affichés pour le moment.
+                  Merci de contacter le club pour connaître les prochaines
+                  séances ou réserver un cours d&apos;essai.
+                </p>
+                <p className="mt-6">
+                  <a
+                    href="#contact"
+                    className="inline-flex items-center rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-2 text-sm font-medium text-red-200 transition hover:bg-red-500/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-400"
+                  >
+                    Contacter le club
+                  </a>
+                </p>
+              </>
+            )}
           </div>
         )}
 
