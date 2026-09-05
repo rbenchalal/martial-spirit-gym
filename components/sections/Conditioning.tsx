@@ -24,7 +24,7 @@ export default function Conditioning() {
   useEffect(() => {
     const loadConditioning = async () => {
       try {
-        const response = await fetch("/api/admin/conditioning");
+        const response = await fetch("/api/public/conditioning");
         const data = (await response.json()) as {
           conditioning?: EditableConditioning | null;
         };

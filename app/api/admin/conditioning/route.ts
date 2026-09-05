@@ -5,6 +5,7 @@ import {
   writeEditableConditioning,
   type EditableConditioning,
 } from "@/lib/editable-conditioning-store";
+import { handleGetAdminConditioning } from "@/lib/conditioning/http";
 
 type ErrorBody = { error: string };
 
@@ -28,14 +29,11 @@ function hasRequiredContent(value: EditableConditioning) {
   return value.title.trim().length > 0 && value.description.trim().length > 0;
 }
 
-export async function GET() {
-  try {
-    const conditioning = await readEditableConditioning();
-    return NextResponse.json({ conditioning });
-  } catch (error) {
-    console.error("Failed to read conditioning", error);
-    return jsonError("Impossible de recuperer les donnees Conditioning.", 500);
-  }
+export async function GET(request: Request): Promise<Response> {
+  return handleGetAdminConditioning({
+    requireAdmin: async () => requireAdminSession(request) === null,
+    readConditioning: () => readEditableConditioning(),
+  });
 }
 
 export async function POST(request: Request) {
