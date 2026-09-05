@@ -30,7 +30,9 @@
     "test:tarifs-admin-model": "node --test lib/tarifs/admin-model.test.ts",
     "test:contact-http": "node --test lib/contact/http.test.ts",
     "test:social-links-http": "node --test lib/social-links/http.test.ts",
-    "test:conditioning-http": "node --test lib/conditioning/http.test.ts"
+    "test:conditioning-http": "node --test lib/conditioning/http.test.ts",
+    "test:gallery-http": "node --test lib/gallery/http.test.ts",
+    "test:featured-video-http": "node --test lib/featured-video/http.test.ts"
   },
   "dependencies": {
     "@vercel/blob": "^2.3.1",

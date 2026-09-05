@@ -5,6 +5,7 @@ import {
   writeEditableFeaturedVideo,
   type EditableFeaturedVideo,
 } from "@/lib/editable-featured-video-store";
+import { handleGetAdminFeaturedVideo } from "@/lib/featured-video/http";
 
 type ErrorBody = { error: string };
 
@@ -34,16 +35,11 @@ function hasRequiredContent(value: EditableFeaturedVideo) {
   );
 }
 
-export async function GET() {
-  try {
-    const featuredVideo = await readEditableFeaturedVideo();
-    return NextResponse.json({
-      featuredVideo,
-    });
-  } catch (error) {
-    console.error("Failed to read featured video", error);
-    return jsonError("Impossible de recuperer la video en vedette.", 500);
-  }
+export async function GET(request: Request): Promise<Response> {
+  return handleGetAdminFeaturedVideo({
+    requireAdmin: async () => requireAdminSession(request) === null,
+    readFeaturedVideo: () => readEditableFeaturedVideo(),
+  });
 }
 
 export async function POST(request: Request) {

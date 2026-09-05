@@ -31,7 +31,7 @@ export default function Gallery() {
   useEffect(() => {
     const loadDynamicGallery = async () => {
       try {
-        const response = await fetch("/api/admin/gallery");
+        const response = await fetch("/api/public/gallery");
         const data = (await response.json()) as { gallery?: DynamicGalleryItem[] };
 
         if (!response.ok || !Array.isArray(data.gallery)) {
@@ -56,7 +56,7 @@ export default function Gallery() {
   useEffect(() => {
     const loadFeaturedVideo = async () => {
       try {
-        const response = await fetch("/api/admin/featured-video");
+        const response = await fetch("/api/public/featured-video");
         const data = (await response.json()) as {
           featuredVideo?: FeaturedVideoItem | null;
         };

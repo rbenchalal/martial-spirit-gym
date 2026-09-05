@@ -5,6 +5,7 @@ import {
   writeEditableGallery,
 } from "@/lib/editable-gallery-store";
 import type { EditableGalleryItem } from "@/lib/editable-gallery";
+import { handleGetAdminGallery } from "@/lib/gallery/http";
 
 type ErrorBody = { error: string };
 
@@ -26,14 +27,11 @@ function isValidGalleryItem(item: unknown): item is EditableGalleryItem {
   );
 }
 
-export async function GET() {
-  try {
-    const gallery = await readEditableGallery();
-    return NextResponse.json({ gallery });
-  } catch (error) {
-    console.error("Failed to read editable gallery", error);
-    return jsonError("Impossible de recuperer la galerie dynamique.", 500);
-  }
+export async function GET(request: Request): Promise<Response> {
+  return handleGetAdminGallery({
+    requireAdmin: async () => requireAdminSession(request) === null,
+    readGallery: () => readEditableGallery(),
+  });
 }
 
 export async function POST(request: Request) {
