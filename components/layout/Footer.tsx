@@ -61,7 +61,7 @@ export default function Footer() {
   useEffect(() => {
     const loadContact = async () => {
       try {
-        const response = await fetch("/api/admin/contact");
+        const response = await fetch("/api/public/contact");
         const data = (await response.json()) as {
           contact?: EditableContact | null;
         };
@@ -120,16 +120,16 @@ export default function Footer() {
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-red-200">Démarrage / Informations</p>
             <p className="mt-1 text-sm text-zinc-300">
-              Un cours d'essai permet de découvrir l'ambiance du club, la méthodologie et le niveau adapté à vos
+              Un cours d&apos;essai permet de découvrir l&apos;ambiance du club, la méthodologie et le niveau adapté à vos
               objectifs.
             </p>
           </div>
-          <a
+          <Link
             href="/#contact"
             className="inline-flex items-center justify-center rounded-full bg-red-600 px-5 py-2.5 text-sm font-semibold text-white transition duration-200 md:hover:-translate-y-0.5 hover:bg-red-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/60"
           >
             Contacter le club
-          </a>
+          </Link>
         </div>
 
         <div className="grid gap-10 lg:grid-cols-[1.4fr_1fr_1fr]">

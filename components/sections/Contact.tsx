@@ -61,7 +61,7 @@ export default function Contact() {
   useEffect(() => {
     const loadContact = async () => {
       try {
-        const response = await fetch("/api/admin/contact");
+        const response = await fetch("/api/public/contact");
         const data = (await response.json()) as { contact?: EditableContact | null };
 
         if (!response.ok || !data.contact) {

@@ -5,6 +5,7 @@ import {
   writeEditableContact,
   type EditableContact,
 } from "@/lib/editable-contact-store";
+import { handleGetAdminContact } from "@/lib/contact/http";
 
 type ErrorBody = { error: string };
 
@@ -33,14 +34,11 @@ function hasRequiredContent(value: EditableContact) {
   );
 }
 
-export async function GET() {
-  try {
-    const contact = await readEditableContact();
-    return NextResponse.json({ contact });
-  } catch (error) {
-    console.error("Failed to read contact", error);
-    return jsonError("Impossible de recuperer les donnees Contact.", 500);
-  }
+export async function GET(request: Request): Promise<Response> {
+  return handleGetAdminContact({
+    requireAdmin: async () => requireAdminSession(request) === null,
+    readContact: () => readEditableContact(),
+  });
 }
 
 export async function POST(request: Request) {
